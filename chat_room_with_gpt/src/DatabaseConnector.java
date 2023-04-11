@@ -118,8 +118,6 @@ public class DatabaseConnector {
         try {
             String sql = "INSERT INTO clients (client_id) VALUES (?)";
             PreparedStatement pstmt = conn.prepareStatement(sql);
-            XAConnection xaConn = ((XADataSource)conn).getXAConnection();
-            XAResource xaResource = xaConn.getXAResource();
             pstmt.setString(1, clientID);
             pstmt.executeUpdate();
             return true;
