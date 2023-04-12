@@ -13,8 +13,10 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
     }
 
     public synchronized void register(ChatClientInterface client) throws RemoteException {
-        clients.add(client);
-        saveClientToDatabase(client.getClientID());
+        DatabaseConnector databaseConnector = new DatabaseConnector();
+        if (databaseConnector.twoPCInsertClient(client.getClientID())) {
+            clients.add(client);
+        }
     }
 
     public synchronized void broadcast(String message, ChatClientInterface c) throws RemoteException {
@@ -29,15 +31,15 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
         }
     }
 
-    private void saveClientToDatabase(String clientID) {
-        DatabaseConnector databaseConnector = new DatabaseConnector();
-        try {
-            databaseConnector.twoPCInsertClient(clientID);
-        } catch (SQLException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-    }
+//    private void saveClientToDatabase(String clientID) {
+//        DatabaseConnector databaseConnector = new DatabaseConnector();
+//        try {
+//            databaseConnector.twoPCInsertClient(clientID);
+//        } catch (SQLException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        }
+//    }
 
     public static void main(String[] args) {
         try {
