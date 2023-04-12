@@ -13,8 +13,8 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
     }
 
     public synchronized void register(ChatClientInterface client) throws RemoteException {
-        DatabaseConnector databaseConnector = new DatabaseConnector();
-        if (databaseConnector.twoPCInsertClient(client.getClientID())) {
+        DatabaseCoordinator databaseCoordinator = new DatabaseCoordinator();
+        if (databaseCoordinator.twoPCInsertClient(client.getClientID())) {
             clients.add(client);
         }
     }
