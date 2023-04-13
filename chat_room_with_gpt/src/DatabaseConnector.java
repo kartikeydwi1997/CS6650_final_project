@@ -41,6 +41,21 @@ public class DatabaseConnector {
 
     }
 
+    public boolean insertMessage(String messageContent,String messageID, String clientID, String roomID) {
+        try {
+            String sql = "INSERT INTO messages (message_id, client_id, room_id, message_content) VALUES (?, ?, ?, ?)";
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, messageID);
+            pstmt.setString(2, clientID);
+            pstmt.setString(3, roomID);
+            pstmt.setString(4, messageContent);
+            pstmt.executeUpdate();
+            return true;
+        } catch (SQLException s) {
+            System.out.println("Error in inserting message: " + messageID);
+            return false;
+        }
+    }
     public void connectToDatabase(String url) {
         try {
             String user = "root";
@@ -85,22 +100,11 @@ public class DatabaseConnector {
             System.err.println("Database connection error: " + e.getMessage());
             e.printStackTrace();
             // Roll back the transaction on error
-            try {
-                xaResource.rollback(xid);
-            } catch (XAException xe) {
-                System.err.println("Error rolling back transaction: " + xe.getMessage());
-                xe.printStackTrace();
-            }
+
         } catch (Exception e) {
             System.err.println("Error: " + e.getMessage());
             e.printStackTrace();
-            // Roll back the transaction on error
-            try {
-                xaResource.rollback(xid);
-            } catch (XAException xe) {
-                System.err.println("Error rolling back transaction: " + xe.getMessage());
-                xe.printStackTrace();
-            }
+
 
         }
     }
@@ -129,10 +133,15 @@ public class DatabaseConnector {
         }
     }
 
-    public void rollbackTransaction() throws Exception {
-        conn.rollback(savepoint);
-        xaResource.end(xid, XAResource.TMFAIL);
-        xaResource.rollback(xid);
-        System.out.println("Transaction rolled back successfully.");
-    }
+//    public void rollbackTransaction() throws Exception {
+//            conn.rollback(savepoint);
+//        xaResource.end(xid, XAResource.TMFAIL);
+//        xaResource.rollback(xid);
+//        System.out.println("Transaction rolled back successfully.");
+//    }
+public void rollbackTransaction() throws Exception {
+    xaResource.end(xid, XAResource.TMFAIL);
+    xaResource.rollback(xid);
+    System.out.println("Transaction rolled back successfully.");
+}
 }
