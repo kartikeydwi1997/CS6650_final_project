@@ -61,6 +61,7 @@ public class DatabaseConnector {
             random.nextBytes(branchQualifier);
             xid = new CustomXid(formatId, globalTransactionId, branchQualifier);
             xaResource.start(xid, XAResource.TMNOFLAGS);
+
 //            DatabaseMetaData metaData = (DatabaseMetaData) conn.getMetaData();
 //            ResultSet tables = metaData.getTables(null, null, "clients", null);
 //            if (tables.next()) {
