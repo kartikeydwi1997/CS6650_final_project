@@ -1,5 +1,6 @@
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 import javax.sql.XAConnection;
@@ -7,15 +8,12 @@ import javax.sql.XADataSource;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
+
+import com.mysql.cj.jdbc.DatabaseMetaData;
 import com.mysql.cj.jdbc.MysqlXADataSource;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.Statement;
 import java.util.Random;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 public class DatabaseConnector {
     private Connection conn;
@@ -28,11 +26,12 @@ public class DatabaseConnector {
 
 
 
-    public boolean insertClient(String clientID) {
+    public boolean insertClient(String clientID,String roomID) {
         try {
-            String sql = "INSERT INTO clients (client_id) VALUES (?)";
+            String sql = "INSERT INTO clients (client_id,room_id) VALUES (?,?)";
             PreparedStatement pstmt = conn.prepareStatement(sql);
             pstmt.setString(1, clientID);
+            pstmt.setString(2, roomID);
             pstmt.executeUpdate();
             return true;
         } catch (SQLException s) {
@@ -44,9 +43,8 @@ public class DatabaseConnector {
 
     public void connectToDatabase(String url) {
         try {
-            // String url = "jdbc:mysql://localhost:3306/ds_final";
             String user = "root";
-            String password = "Var$So$2382";
+            String password = "";
 
             xaDataSource = createXADatasource(url, user, password);
             xaConnection = xaDataSource.getXAConnection();
@@ -63,18 +61,46 @@ public class DatabaseConnector {
             random.nextBytes(branchQualifier);
             xid = new CustomXid(formatId, globalTransactionId, branchQualifier);
             xaResource.start(xid, XAResource.TMNOFLAGS);
-            // savepoint = conn.setSavepoint("2PC_SAVEPOINT");
+//            DatabaseMetaData metaData = (DatabaseMetaData) conn.getMetaData();
+//            ResultSet tables = metaData.getTables(null, null, "clients", null);
+//            if (tables.next()) {
+//                System.out.println("Table exists");
+//            } else {
+//                xaResource.end(xid, XAResource.TMSUCCESS);
+//                xaResource.commit(xid, true);
+//                String sql="CREATE TABLE clients (\n" +
+//                        "  client_id INT NOT NULL,\n" +
+//                        "  room_id INT NOT NULL,\n" +
+//                        "  PRIMARY KEY (client_id)\n" +
+//                        ")";
+//                PreparedStatement pstmt = conn.prepareStatement(sql);
+//                pstmt.executeUpdate();
+//                System.out.println("Created table in given database...");
+//            }
 
             System.out.println("Connected to database using 2PC protocol");
-
             // Perform SQL operations here and commit or rollback as needed.
-
         } catch (SQLException e) {
             System.err.println("Database connection error: " + e.getMessage());
             e.printStackTrace();
+            // Roll back the transaction on error
+            try {
+                xaResource.rollback(xid);
+            } catch (XAException xe) {
+                System.err.println("Error rolling back transaction: " + xe.getMessage());
+                xe.printStackTrace();
+            }
         } catch (Exception e) {
             System.err.println("Error: " + e.getMessage());
             e.printStackTrace();
+            // Roll back the transaction on error
+            try {
+                xaResource.rollback(xid);
+            } catch (XAException xe) {
+                System.err.println("Error rolling back transaction: " + xe.getMessage());
+                xe.printStackTrace();
+            }
+
         }
     }
 

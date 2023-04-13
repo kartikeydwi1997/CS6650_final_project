@@ -23,7 +23,7 @@ public class DatabaseCoordinator {
         dbConnectors[1] = dc2;
     }
 
-    public boolean twoPCInsertClient(String clientID) {
+    public boolean twoPCInsertClient(String clientID,String roomID) {
 
         // Place other transaction operations here.
         try {
@@ -32,7 +32,7 @@ public class DatabaseCoordinator {
             for (DatabaseConnector db : dbConnectors) {
                 System.out.println("In prepare phase");
                 Future<String> future = executorService.submit(() -> {
-                    if (db.insertClient(clientID)) {
+                    if (db.insertClient(clientID, roomID)) {
                         return "READY";
                     } else {
                         db.rollbackTransaction();
@@ -45,7 +45,6 @@ public class DatabaseCoordinator {
                 return false;
             }
             System.out.println("Prepare phase done");
-
             List<Future<String>> futuresCommit = new ArrayList<>();
             // phase 2
             for (DatabaseConnector db : dbConnectors) {
