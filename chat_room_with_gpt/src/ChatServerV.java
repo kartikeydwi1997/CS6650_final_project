@@ -13,16 +13,18 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
     }
 
     public synchronized void register(ChatClientInterface client) throws RemoteException {
-        DatabaseConnector databaseConnector = new DatabaseConnector();
-        if (databaseConnector.twoPCInsertClient(client.getClientID())) {
+        DatabaseCoordinator databaseCoordinator = new DatabaseCoordinator();
+        if (databaseCoordinator.twoPCInsertClient(client.getClientID(), client.getRoomID())) {
             clients.add(client);
         }
     }
 
     public synchronized void broadcast(String message, ChatClientInterface c) throws RemoteException {
-        System.out.println(message);
+        System.out.println("Broadcast message: "+message);
+        System.out.println("Broadcast client: "+c.getClientID() + " from room ID: "+ c.getRoomID());
         for (ChatClientInterface client : clients) {
-            if (client.getClientID().equals(c.getClientID())) {
+            System.out.println("In side for loop broadcast client: "+client.getClientID() + " from room ID: "+ client.getRoomID());
+            if (client.getClientID().equals(c.getClientID()) || !Objects.equals(client.getRoomID(), c.getRoomID())) {
                 continue;
             } else {
                 client.receiveMessage(c, message);
@@ -31,25 +33,13 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
         }
     }
 
-//    private void saveClientToDatabase(String clientID) {
-//        DatabaseConnector databaseConnector = new DatabaseConnector();
-//        try {
-//            databaseConnector.twoPCInsertClient(clientID);
-//        } catch (SQLException e) {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//        }
-//    }
-
     public static void main(String[] args) {
         try {
             // create the server object
             ChatServerV server = new ChatServerV();
-
             // create the RMI registry and bind the server object to it
-            Registry registry = LocateRegistry.createRegistry(1099);
+            Registry registry = LocateRegistry.createRegistry(3000);
             registry.rebind("ChatServer", server);
-
             System.out.println("Chat server started");
         } catch (Exception e) {
             System.err.println("Chat server exception: " + e.getMessage());

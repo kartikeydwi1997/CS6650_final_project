@@ -3,7 +3,7 @@ import java.rmi.server.UnicastRemoteObject;
 
 public class ChatClient {
     private static final String SERVER_HOST = "localhost";
-    private static final int SERVER_PORT = 1099;
+    private static final int SERVER_PORT = 3000;
 
     public static void main(String[] args) {
         try {
@@ -15,7 +15,9 @@ public class ChatClient {
             java.util.Scanner scanner = new java.util.Scanner(System.in);
             System.out.print("Enter client ID: ");
             String clientID = scanner.nextLine();
-            ChatClientInterface client = new ChatClientImpl(clientID);
+            System.out.println("Enter room ID: ");
+            String roomID = scanner.nextLine();
+            ChatClientInterface client = new ChatClientImpl(clientID, roomID);
             server.register(client);
 
             // read user input and send messages to the server
@@ -34,9 +36,13 @@ public class ChatClient {
 // that clients use to receive messages from the server.
 class ChatClientImpl extends UnicastRemoteObject implements ChatClientInterface {
     private String ClientID;
+    private String RoomID;
 
-    public ChatClientImpl(String cid) throws RemoteException {
+
+
+    public ChatClientImpl(String cid, String roomID) throws RemoteException {
         this.ClientID = cid;
+        this.RoomID = roomID;
     }
 
     public String getClientID() {
@@ -47,7 +53,14 @@ class ChatClientImpl extends UnicastRemoteObject implements ChatClientInterface 
         this.ClientID = cid;
     }
 
+    public String getRoomID() {
+        return this.RoomID;
+    }
+
+    private void setRoomID(String roomID) {
+        this.RoomID = roomID;
+    }
     public void receiveMessage(ChatClientInterface c, String message) throws RemoteException {
-        System.out.println("Client " + c.getClientID() + ":" + message);
+        System.out.println("Client " + c.getClientID() + " from room ID:"+ c.getRoomID()+ ": " + message);
     }
 }

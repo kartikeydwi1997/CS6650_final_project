@@ -1,5 +1,6 @@
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 import javax.sql.XAConnection;
@@ -7,15 +8,12 @@ import javax.sql.XADataSource;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
+
+import com.mysql.cj.jdbc.DatabaseMetaData;
 import com.mysql.cj.jdbc.MysqlXADataSource;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.Statement;
 import java.util.Random;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 public class DatabaseConnector {
     private Connection conn;
@@ -24,101 +22,16 @@ public class DatabaseConnector {
     private XAResource xaResource;
     private Xid xid;
     private Savepoint savepoint;
-    private final ExecutorService executorService = Executors.newFixedThreadPool(10);
 
-    public boolean twoPCInsertClient(String clientID) {
-        DatabaseConnector dc1 = new DatabaseConnector();
-        DatabaseConnector dc2 = new DatabaseConnector();
-        dc1.connectToDatabase("jdbc:mysql://localhost:3306/db1");
-        dc2.connectToDatabase("jdbc:mysql://localhost:3306/db2");
 
-        DatabaseConnector[] dbConnectors = new DatabaseConnector[2];
-        dbConnectors[0] = dc1;
-        dbConnectors[1] = dc2;
 
-        // Place other transaction operations here.
+
+    public boolean insertClient(String clientID,String roomID) {
         try {
-            List<Future<String>> futuresPrepare = new ArrayList<>();
-            // phase 1
-            for (DatabaseConnector db : dbConnectors) {
-                System.out.println("In prepare phase");
-                Future<String> future = executorService.submit(() -> {
-                    if (db.insertClient(clientID)) {
-                        return "READY";
-                    } else {
-                        db.rollbackTransaction();
-                        return "FAIL";
-                    }
-                });
-                futuresPrepare.add(future);
-            }
-            if (!checkFutures(futuresPrepare)) {
-                return false;
-            }
-            System.out.println("Prepare phase done");
-
-            List<Future<String>> futuresCommit = new ArrayList<>();
-            // phase 2
-            for (DatabaseConnector db : dbConnectors) {
-                System.out.println("In commit phase");
-                Future<String> future = executorService.submit(() -> {
-                    if (db.commitTransaction()) {
-                        return "READY";
-                    } else {
-                        return "FAIL";
-                    }
-                });
-                futuresCommit.add(future);
-            }
-            if (!checkFutures(futuresCommit)) {
-                return false;
-            }
-            System.out.println("Commit phase done");
-
-        } catch (Exception e) {
-            System.err.println("Error performing SQL operation: " + e.getMessage());
-            e.printStackTrace();
-            try {
-                // Rollback transaction if an error occurred
-                dc1.rollbackTransaction();
-                dc2.rollbackTransaction();
-            } catch (Exception ex) {
-                System.err.println("Error rolling back transaction: " + ex.getMessage());
-                ex.printStackTrace();
-            }
-            return false;
-        }
-        return true;
-    }
-
-    private boolean checkFutures(List<Future<String>> futures) {
-        Boolean[] votes = {false, false};
-        int index = 0;
-        try {
-            for (Future<String> future : futures) {
-                if (future.get().equals("READY")) {
-                    votes[index] = true;
-                    index++;
-                } else {
-                    Thread.sleep(1000);
-                    if (future.get().equals("READY")) {
-                        votes[index] = true;
-                        index++;
-                    }
-                }
-            }
-        } catch (ExecutionException | InterruptedException e) {
-            System.out.println(e.getMessage());
-            return false;
-        }
-        return votes[0] && votes[1];
-    }
-
-    public boolean insertClient(String clientID) {
-        try {
-            String sql = "INSERT INTO clients (client_id) VALUES (?)";
+            String sql = "INSERT INTO clients (client_id,room_id) VALUES (?,?)";
             PreparedStatement pstmt = conn.prepareStatement(sql);
             pstmt.setString(1, clientID);
+            pstmt.setString(2, roomID);
             pstmt.executeUpdate();
             return true;
         } catch (SQLException s) {
@@ -128,9 +41,8 @@ public class DatabaseConnector {
 
     }
 
-    private void connectToDatabase(String url) {
+    public void connectToDatabase(String url) {
         try {
-            // String url = "jdbc:mysql://localhost:3306/ds_final";
             String user = "root";
             String password = "";
 
@@ -149,18 +61,47 @@ public class DatabaseConnector {
             random.nextBytes(branchQualifier);
             xid = new CustomXid(formatId, globalTransactionId, branchQualifier);
             xaResource.start(xid, XAResource.TMNOFLAGS);
-            // savepoint = conn.setSavepoint("2PC_SAVEPOINT");
+
+//            DatabaseMetaData metaData = (DatabaseMetaData) conn.getMetaData();
+//            ResultSet tables = metaData.getTables(null, null, "clients", null);
+//            if (tables.next()) {
+//                System.out.println("Table exists");
+//            } else {
+//                xaResource.end(xid, XAResource.TMSUCCESS);
+//                xaResource.commit(xid, true);
+//                String sql="CREATE TABLE clients (\n" +
+//                        "  client_id INT NOT NULL,\n" +
+//                        "  room_id INT NOT NULL,\n" +
+//                        "  PRIMARY KEY (client_id)\n" +
+//                        ")";
+//                PreparedStatement pstmt = conn.prepareStatement(sql);
+//                pstmt.executeUpdate();
+//                System.out.println("Created table in given database...");
+//            }
 
             System.out.println("Connected to database using 2PC protocol");
-
             // Perform SQL operations here and commit or rollback as needed.
-
         } catch (SQLException e) {
             System.err.println("Database connection error: " + e.getMessage());
             e.printStackTrace();
+            // Roll back the transaction on error
+            try {
+                xaResource.rollback(xid);
+            } catch (XAException xe) {
+                System.err.println("Error rolling back transaction: " + xe.getMessage());
+                xe.printStackTrace();
+            }
         } catch (Exception e) {
             System.err.println("Error: " + e.getMessage());
             e.printStackTrace();
+            // Roll back the transaction on error
+            try {
+                xaResource.rollback(xid);
+            } catch (XAException xe) {
+                System.err.println("Error rolling back transaction: " + xe.getMessage());
+                xe.printStackTrace();
+            }
+
         }
     }
 
