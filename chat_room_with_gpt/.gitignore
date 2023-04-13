@@ -1,8 +1,14 @@
-# IntelliJ
-out/
-
+# IntelliJ IDEA
 .idea/
-.idea_modules/
 *.iml
-*.ipr
 *.iws
+*.ipr
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+# macOS
+*.DS_Store
+
+# JAR files
+*.jar
