@@ -3,7 +3,6 @@
 *.iml
 *.iws
 *.ipr
-*.class
 # Visual Studio Code
 .vscode/
 *.code-workspace
