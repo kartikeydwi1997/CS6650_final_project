@@ -82,6 +82,61 @@ public class DatabaseCoordinator {
         return true;
     }
 
+
+    public boolean twoPCInsertMessage(String message, String messageID, String clientID, String roomID) {
+        try {
+            List<Future<String>> futuresPrepare = new ArrayList<>();
+            // phase 1
+            for (DatabaseConnector db : dbConnectors) {
+                Future<String> future = executorService.submit(() -> {
+                    if (db.insertMessage(message, messageID, clientID, roomID)) {
+                        return "READY";
+                    } else {
+                        db.rollbackTransaction();
+                        return "FAIL";
+                    }
+                });
+                futuresPrepare.add(future);
+            }
+            if (!checkFutures(futuresPrepare)) {
+                return false;
+            }
+            System.out.println("Prepare phase done");
+            List<Future<String>> futuresCommit = new ArrayList<>();
+            // phase 2
+            for (DatabaseConnector db : dbConnectors) {
+                Future<String> future = executorService.submit(() -> {
+                    if (db.commitTransaction()) {
+                        System.out.println("commit ready");
+                        return "READY";
+                    } else {
+                        System.out.println("commit fail");
+                        return "FAIL";
+                    }
+                });
+                futuresCommit.add(future);
+            }
+            if (!checkFutures(futuresCommit)) {
+                System.out.println("Futures failed");
+                return false;
+            }
+            System.out.println("Commit phase done");
+        } catch (Exception e) {
+            System.err.println("Error performing SQL operation: " + e.getMessage());
+            e.printStackTrace();
+            try {
+                // Rollback transaction if an error occurred
+                dc1.rollbackTransaction();
+                dc2.rollbackTransaction();
+            } catch (Exception ex) {
+                System.err.println("Error rolling back transaction: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+            return false;
+        }
+        return true;
+    }
+
     private boolean checkFutures(List<Future<String>> futures) {
         Boolean[] votes = {false, false};
         int index = 0;
