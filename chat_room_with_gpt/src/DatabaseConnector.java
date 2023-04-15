@@ -62,14 +62,6 @@ public class DatabaseConnector {
             xaConnection = xaDataSource.getXAConnection();
             conn = xaConnection.getConnection();
             xaResource = xaConnection.getXAResource();
-            // Begin the global transaction
-            Random random = new Random();
-            int formatId = random.nextInt();
-            byte[] globalTransactionId = new byte[1];
-            byte[] branchQualifier = new byte[1];
-
-            random.nextBytes(globalTransactionId);
-            random.nextBytes(branchQualifier);
             xid = createXid();
         } catch (SQLException e) {
         }
