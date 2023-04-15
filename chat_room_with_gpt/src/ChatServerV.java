@@ -5,11 +5,13 @@ import java.util.*;
 import java.sql.*;
 
 public class ChatServerV extends UnicastRemoteObject implements ChatServerInterface {
-    private List<ChatClientInterface> clients;
-    private int messageCounter = 0;
+    private final List<ChatClientInterface> clients;
+    private final LamportClock lamportClock;
+
     public ChatServerV() throws RemoteException {
         super();
-        clients = new ArrayList<ChatClientInterface>();
+        clients = new ArrayList<>();
+        lamportClock = new LamportClock();
     }
 
     public synchronized void register(ChatClientInterface client) throws RemoteException {
@@ -22,11 +24,14 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
     public synchronized void broadcast(String message, ChatClientInterface c) throws RemoteException {
         System.out.println("Broadcast message: "+message);
         System.out.println("Broadcast client: "+c.getClientID() + " from room ID: "+ c.getRoomID());
-        int messageID = ++messageCounter;
+
+        ChatMessage chatMessage = new ChatMessage(c.getClientID(), c.getRoomID(), message);
+        chatMessage.setTimestamp(lamportClock.tick());
 
         // Insert message into SQL database
         DatabaseCoordinator databaseCoordinator = new DatabaseCoordinator();
-        if (databaseCoordinator.twoPCInsertMessage(message, Integer.toString(messageID), c.getClientID(), c.getRoomID())) {
+        if (databaseCoordinator.twoPCInsertMessage(chatMessage.getContent(), Integer.toString(chatMessage.getTimestamp()),
+                chatMessage.getSender(), chatMessage.getRoom())) {
             System.out.println("Message inserted into SQL database");
         } else {
             System.err.println("Error inserting message into SQL database");
@@ -37,9 +42,8 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
             if (client.getClientID().equals(c.getClientID()) || !Objects.equals(client.getRoomID(), c.getRoomID())) {
                 continue;
             } else {
-                client.receiveMessage(c, message);
+                client.receiveMessage(c, chatMessage);
             }
-
         }
     }
 
