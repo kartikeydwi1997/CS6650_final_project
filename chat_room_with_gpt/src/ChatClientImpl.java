@@ -6,9 +6,7 @@ import java.rmi.*;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.*;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.StringTokenizer;
 
 
 // This class implements the ChatClientInterface, which is the remote interface
@@ -110,7 +108,7 @@ class ClientGUI extends JFrame {
 
                 try {
                     System.out.println("Timer fired");
-                    Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/db1", "root", "");
+                    Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/db1", "root", "Var$So$2382");
                     Statement stmt = conn.createStatement();
                     String sql = "SELECT message_id, client_id, message_content FROM messages WHERE room_id =" +
                             client.getRoomID() + " AND message_id > " + last_message_id[0] + " ORDER BY message_id";
@@ -122,24 +120,16 @@ class ClientGUI extends JFrame {
                         last_message_id[0] = Integer.parseInt(rs.getString("message_id"));
                         message = rs.getString("message_content");
                         sender = rs.getString("client_id");
-//                        String existingText = clientMessageBoard.getText();
-//                        System.out.println("Existing text: " + existingText);
+                        activeUsers.add(sender);
+                        activeUserListModel.addElement(sender);
                         String newText = "\n" + sender + ": " + message;
-                        System.out.println("New text: " + newText);
                         clientMessageBoard.append(newText);
                     }
-                    System.out.println(message);
-                    System.out.println(sender);
-
-
-//                    String newText = existingText + "\n" + sender + ": " + message;
-//                    System.out.println("New text: " + newText);
-//                    clientMessageBoard.setText(newText);
                     rs.close();
                     stmt.close();
                     conn.close();
                 } catch (SQLException ex) {
-                    System.out.println("shit");
+                    System.out.println("SQL error");
                     // handle exceptions here
                 } catch (RemoteException ex) {
                     throw new RuntimeException(ex);
@@ -147,8 +137,6 @@ class ClientGUI extends JFrame {
             }
         });
         timer.start();
-
-
 
         //Create label for active user list
         JLabel labelActiveUser = new JLabel("Active Users");
