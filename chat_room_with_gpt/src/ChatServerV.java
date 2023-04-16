@@ -6,11 +6,13 @@ import java.sql.*;
 
 public class ChatServerV extends UnicastRemoteObject implements ChatServerInterface {
     private final List<ChatClientInterface> clients;
+    private final List<ChatMessage> messages;
     private final LamportClock lamportClock;
 
     public ChatServerV() throws RemoteException {
         super();
         clients = new ArrayList<>();
+        messages = new ArrayList<>();
         lamportClock = new LamportClock();
     }
 
@@ -32,19 +34,30 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
         DatabaseCoordinator databaseCoordinator = new DatabaseCoordinator();
         if (databaseCoordinator.twoPCInsertMessage(chatMessage.getContent(), Integer.toString(chatMessage.getTimestamp()),
                 chatMessage.getSender(), chatMessage.getRoom())) {
+            messages.add(chatMessage);
             System.out.println("Message inserted into SQL database");
         } else {
             System.err.println("Error inserting message into SQL database");
         }
 
         for (ChatClientInterface client : clients) {
-            System.out.println("In side for loop broadcast client: "+client.getClientID() + " from room ID: "+ client.getRoomID());
+            System.out.println("In side for loop broadcast client: " + client.getClientID() +
+                    " from room ID: "+ client.getRoomID());
             if (client.getClientID().equals(c.getClientID()) || !Objects.equals(client.getRoomID(), c.getRoomID())) {
                 continue;
             } else {
-                client.receiveMessage(c, chatMessage);
+                client.receiveMessage(chatMessage);
             }
         }
+    }
+
+    public synchronized List<ChatMessage> sendBack() throws RemoteException {
+        return messages;
+    }
+
+    @Override
+    public List<ChatClientInterface> getClients() throws RemoteException {
+        return clients;
     }
 
     public static void main(String[] args) {
