@@ -1,3 +1,4 @@
+import java.io.Serializable;
 import java.rmi.*;
 import java.rmi.server.*;
 import java.rmi.registry.*;
@@ -23,7 +24,7 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
         }
     }
 
-    public synchronized void broadcast(String message, ChatClientInterface c) throws RemoteException {
+    public synchronized void broadcast(String message, ChatClientInterface c,MessageCallback callback) throws RemoteException {
         System.out.println("Broadcast message: "+message);
         System.out.println("Broadcast client: "+c.getClientID() + " from room ID: "+ c.getRoomID());
 
@@ -33,7 +34,7 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
         // Insert message into SQL database
         DatabaseCoordinator databaseCoordinator = new DatabaseCoordinator();
         if (databaseCoordinator.twoPCInsertMessage(chatMessage.getContent(), Integer.toString(chatMessage.getTimestamp()),
-                chatMessage.getSender(), chatMessage.getRoom())) {
+                chatMessage.getSender(), chatMessage.getRoom(), callback)) {
             messages.add(chatMessage);
             System.out.println("Message inserted into SQL database");
         } else {
@@ -43,7 +44,9 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
         for (ChatClientInterface client : clients) {
             System.out.println("In side for loop broadcast client: " + client.getClientID() +
                     " from room ID: "+ client.getRoomID());
+            System.out.println("client id = " + client.getClientID()+" and c id = " + c.getClientID());
             if (client.getClientID().equals(c.getClientID()) || !Objects.equals(client.getRoomID(), c.getRoomID())) {
+                System.out.println("continue");
                 continue;
             } else {
                 client.receiveMessage(chatMessage);

@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="mysql-connector-j-8.0.32522bb1d22ba92c935a4d7ef554f0a888ce106b7fbdb96edaac6b0b95b31523ea">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/chat_room_with_gpt/lib/mysql-connector-j-8.0.32522bb1d22ba92c935a4d7ef554f0a888ce106b7fbdb96edaac6b0b95b31523ea.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

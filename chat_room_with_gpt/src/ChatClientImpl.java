@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
 
-
+import java.io.Serializable;
 // This class implements the ChatClientInterface, which is the remote interface
 // that clients use to receive messages from the server.
 class ChatClientImpl extends UnicastRemoteObject implements ChatClientInterface {
@@ -42,8 +42,8 @@ class ChatClientImpl extends UnicastRemoteObject implements ChatClientInterface 
         return this.roomID;
     }
 
-    public void sendMessage(String message) throws RemoteException {
-        server.broadcast(message, this);
+    public void sendMessage(String message,MessageCallback callback) throws RemoteException {
+        server.broadcast(message, this,callback);
     }
 
     public void receiveMessage(ChatMessage message) throws RemoteException {
@@ -58,7 +58,7 @@ class ChatClientImpl extends UnicastRemoteObject implements ChatClientInterface 
     }
 }
 
-class ClientGUI extends JFrame {
+class ClientGUI extends JFrame implements Serializable  {
     private JFrame frame;
     private JList<String> activeUsersList;
     private Set<String> activeUsers;
@@ -79,11 +79,8 @@ class ClientGUI extends JFrame {
         initialize();
     }
 
+
     private void initialize() throws RemoteException, SQLException {
-        // timer for polling
-//        Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/db1", "root", "Var$So$2382");
-
-
         //Initialize the frame and set the bounds
         frame = new JFrame();
         frame.setBounds(100, 100, 888, 650);
@@ -99,54 +96,52 @@ class ClientGUI extends JFrame {
         frame.getContentPane().add(activeUsersList);
 
         //Create text area for the clients to read messages sent to other users or sent by other users
+//        clientMessageBoard = new JTextArea();
+//        clientMessageBoard.setEditable(false);
+//        clientMessageBoard.setBounds(12, 51, 530, 300);
+//        frame.getContentPane().add(clientMessageBoard);
         clientMessageBoard = new JTextArea();
         clientMessageBoard.setEditable(false);
-        clientMessageBoard.setBounds(12, 51, 530, 300);
-        frame.getContentPane().add(clientMessageBoard);
+
+        JScrollPane scrollPane = new JScrollPane(clientMessageBoard); // add the text area to a scroll pane
+        scrollPane.setBounds(12, 51, 530, 300);
+        frame.getContentPane().add(scrollPane);
         final int[] last_message_id = {0};
 
-        Timer timer = new Timer(2000, new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-
-                try {
-                    System.out.println("Timer fired");
-                    Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/db1", "root", "");
-                    Statement stmt = conn.createStatement();
-                    String sql = "SELECT message_id, client_id, message_content FROM messages WHERE room_id =" +
-                            client.getRoomID() + " AND message_id > " + last_message_id[0] + " ORDER BY message_id";
-                    System.out.println("SQL: " + sql);
-                    ResultSet rs = stmt.executeQuery(sql);
-
-                    // iterate over the result set and update the GUI
-                    while (rs.next()) {
-                        last_message_id[0] = Integer.parseInt(rs.getString("message_id"));
-                        message = rs.getString("message_content");
-                        sender = rs.getString("client_id");
-//                        String existingText = clientMessageBoard.getText();
-//                        System.out.println("Existing text: " + existingText);
-                        String newText = "\n" + sender + ": " + message;
-                        System.out.println("New text: " + newText);
-                        clientMessageBoard.append(newText);
-                    }
-                    System.out.println(message);
-                    System.out.println(sender);
-
-
+//        Timer timer = new Timer(2000, new ActionListener() {
+//            public void actionPerformed(ActionEvent e) {
+//
+//                try {
+//                    DatabaseConnector connector = new DatabaseConnector();
+//                    connector.connectToDatabase("jdbc:mysql://localhost:3306/db1");
+//                    String sql = "SELECT message_id, client_id, message_content FROM messages WHERE room_id ='" +
+//                            client.getRoomID() + "' AND message_id > " + last_message_id[0] + " ORDER BY message_id;";
+//                    ResultSet rs = connector.getAllMessages(sql);
+//                    String existingText = clientMessageBoard.getText();
+//                    while (rs.next()) {
+//                        last_message_id[0] = rs.getInt("message_id");
+//                        message = rs.getString("message_content");
+//                        sender = rs.getString("client_id");
+//                        String newText = "\n" + sender + ": " + message;
+//                        System.out.println("New text: " + newText);
+//                        clientMessageBoard.append(newText);
+//                        // Do something with the message data
+//                    }
+//
+//
 //                    String newText = existingText + "\n" + sender + ": " + message;
-//                    System.out.println("New text: " + newText);
 //                    clientMessageBoard.setText(newText);
-                    rs.close();
-                    stmt.close();
-                    conn.close();
-                } catch (SQLException ex) {
-                    System.out.println("shit");
-                    // handle exceptions here
-                } catch (RemoteException ex) {
-                    throw new RuntimeException(ex);
-                }
-            }
-        });
-        timer.start();
+//                    rs.close();
+//                    connector.commitTransaction();
+//                } catch (SQLException ex) {
+//                    System.out.println("shit");
+//                    // handle exceptions here
+//                } catch (RemoteException ex) {
+//                    throw new RuntimeException(ex);
+//                }
+//            }
+//        });
+//        timer.start();
 
 
 
@@ -179,8 +174,20 @@ class ClientGUI extends JFrame {
                 String messageTextArea = clientTextBoard.getText();
                 if (messageTextArea != null && !messageTextArea.isEmpty()) {
                     try {
-                        client.sendMessage(messageTextArea);
-                    } catch (RemoteException ex) {
+                        client.sendMessage(messageTextArea, new MessageCallback() {
+                            @Override
+                            public void onError(Exception e) {
+                            }
+                            @Override
+                            public void onSuccess(String clientID, String messageContent)  {
+                                System.out.println();
+                                String existingText = clientMessageBoard.getText();
+                                String newText = existingText + "\n" + clientID + ": " + messageContent;
+                                clientMessageBoard.setText(newText);
+                            }
+                        });
+
+                        } catch (RemoteException ex) {
                         throw new RuntimeException(ex);
                     }
                 }

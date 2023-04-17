@@ -1,3 +1,4 @@
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -48,11 +49,11 @@ public class DatabaseCoordinator {
     }
 
 
-    public boolean twoPCInsertMessage(String message, String timestamp, String clientID, String roomID) {
+    public boolean twoPCInsertMessage(String message, String timestamp, String clientID, String roomID,MessageCallback callback) {
         List<Future<Boolean>> futuresPrepare = new ArrayList<>();
         // phase 1
         for (DatabaseConnector db : dbConnectors) {
-            Future<Boolean> future = executorService.submit(() -> db.insertMessage(message, timestamp, clientID, roomID));
+            Future<Boolean> future = executorService.submit(() -> db.insertMessage(message, timestamp, clientID, roomID,callback));
             futuresPrepare.add(future);
         }
         if (!checkFutures(futuresPrepare)) {

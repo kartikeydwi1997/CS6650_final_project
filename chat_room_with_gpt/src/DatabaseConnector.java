@@ -1,5 +1,7 @@
+import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 import javax.sql.XAConnection;
@@ -34,7 +36,7 @@ public class DatabaseConnector {
         }
     }
 
-    public boolean insertMessage(String messageContent, String timestamp, String clientID, String roomID) {
+    public boolean insertMessage(String messageContent, String timestamp, String clientID, String roomID,MessageCallback callback) {
         try {
             xaResource.start(xid, XAResource.TMNOFLAGS);
             String sql = "INSERT INTO messages (message_id, client_id, room_id, message_content) VALUES (?, ?, ?, ?)";
@@ -45,8 +47,10 @@ public class DatabaseConnector {
             pstmt.setString(4, messageContent);
             pstmt.executeUpdate();
             pstmt.close();
+            callback.onSuccess(clientID,messageContent);
             return true;
-        } catch (SQLException s) {
+        } catch (SQLException e) {
+            callback.onError(e);
             return false;
         } catch (XAException e) {
             return false;
@@ -112,6 +116,16 @@ public class DatabaseConnector {
             }
         } catch (XAException e) {
             return false;
+        }
+    }
+
+    public ResultSet getAllMessages(String sql) {
+        try {
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            return pstmt.executeQuery();
+        } catch (SQLException se) {
+            se.printStackTrace();
+            return null;
         }
     }
 }
