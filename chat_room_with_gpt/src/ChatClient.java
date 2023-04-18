@@ -35,32 +35,28 @@ public class ChatClient {
 // This class implements the ChatClientInterface, which is the remote interface
 // that clients use to receive messages from the server.
 class ChatClientImpl extends UnicastRemoteObject implements ChatClientInterface {
-    private String ClientID;
-    private String RoomID;
-
-
+    private final String ClientID;
+    private final String RoomID;
+    private final LamportClock lamportClock;
 
     public ChatClientImpl(String cid, String roomID) throws RemoteException {
         this.ClientID = cid;
         this.RoomID = roomID;
+        this.lamportClock = new LamportClock();
     }
 
     public String getClientID() {
         return this.ClientID;
     }
 
-    private void setClientID(String cid) {
-        this.ClientID = cid;
-    }
-
     public String getRoomID() {
         return this.RoomID;
     }
 
-    private void setRoomID(String roomID) {
-        this.RoomID = roomID;
-    }
-    public void receiveMessage(ChatClientInterface c, String message) throws RemoteException {
-        System.out.println("Client " + c.getClientID() + " from room ID:"+ c.getRoomID()+ ": " + message);
+
+    public void receiveMessage(ChatClientInterface c, ChatMessage message) throws RemoteException {
+        lamportClock.update(message.getTimestamp());
+        System.out.println("Timestamp: " + message.getTimestamp());
+        System.out.println("Client " + c.getClientID() + " from room ID:"+ c.getRoomID()+ ": " + message.getContent());
     }
 }
