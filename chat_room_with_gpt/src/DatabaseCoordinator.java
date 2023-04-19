@@ -47,12 +47,12 @@ public class DatabaseCoordinator {
         return true;
     }
 
-
     public boolean twoPCInsertMessage(String message, String timestamp, String clientID, String roomID) {
         List<Future<Boolean>> futuresPrepare = new ArrayList<>();
         // phase 1
         for (DatabaseConnector db : dbConnectors) {
-            Future<Boolean> future = executorService.submit(() -> db.insertMessage(message, timestamp, clientID, roomID));
+            Future<Boolean> future = executorService
+                    .submit(() -> db.insertMessage(message, timestamp, clientID, roomID));
             futuresPrepare.add(future);
         }
         if (!checkFutures(futuresPrepare)) {

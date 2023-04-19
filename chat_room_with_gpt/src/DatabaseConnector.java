@@ -56,7 +56,7 @@ public class DatabaseConnector {
     public void connectToDatabase(String url) {
         try {
             String user = "root";
-            String password = "Var$So$2382";
+            String password = "The1isyou";
 
             xaDataSource = createXADatasource(url, user, password);
             xaConnection = xaDataSource.getXAConnection();

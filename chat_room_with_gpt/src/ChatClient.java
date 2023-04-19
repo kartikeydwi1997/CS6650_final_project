@@ -24,6 +24,9 @@ public class ChatClient {
             while (true) {
                 String message = scanner.nextLine();
                 server.broadcast(message, client);
+                if (message.contains("@BOT")) {
+                    server.broadcastGPTANS(message, client);
+                }
             }
         } catch (Exception e) {
             System.err.println("Chat client exception: " + e.getMessage());
@@ -53,10 +56,17 @@ class ChatClientImpl extends UnicastRemoteObject implements ChatClientInterface 
         return this.RoomID;
     }
 
-
     public void receiveMessage(ChatClientInterface c, ChatMessage message) throws RemoteException {
         lamportClock.update(message.getTimestamp());
         System.out.println("Timestamp: " + message.getTimestamp());
-        System.out.println("Client " + c.getClientID() + " from room ID:"+ c.getRoomID()+ ": " + message.getContent());
+        System.out
+                .println("Client " + c.getClientID() + " from room ID:" + c.getRoomID() + ": " + message.getContent());
+    }
+
+    public void receiveAnswer(ChatClientInterface c, ChatMessage message) throws RemoteException {
+        lamportClock.update(message.getTimestamp());
+        System.out.println("Timestamp: " + message.getTimestamp());
+        System.out
+                .println("\u001B[31mChatGPT: \u001B[0m " + message.getContent());
     }
 }

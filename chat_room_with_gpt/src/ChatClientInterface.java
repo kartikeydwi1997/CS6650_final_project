@@ -6,4 +6,6 @@ public interface ChatClientInterface extends Remote {
     public String getClientID() throws RemoteException;
 
     public String getRoomID() throws RemoteException;
+
+    public void receiveAnswer(ChatClientInterface c, ChatMessage message) throws RemoteException;
 }
