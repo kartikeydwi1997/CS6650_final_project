@@ -32,7 +32,7 @@ class ChatClientImpl extends UnicastRemoteObject implements ChatClientInterface 
                 .lookup("rmi://" + SERVER_HOST + ":" + SERVER_PORT + "/ChatServer");
         server.register(this);
         gui = new ClientGUI(this);
-        gui.updateActiveUsersUI(server.getClients());
+        gui.updateActiveUsersUI(server.getClients(),roomID);
     }
 
     public String getClientID() {
@@ -53,7 +53,7 @@ class ChatClientImpl extends UnicastRemoteObject implements ChatClientInterface 
         System.out.println("Client " + message.getSender() + " from room ID:"+ message.getRoom() + ": "
                 + message.getContent());
         gui.updateMessageUI(message);
-        gui.updateActiveUsersUI(server.getClients());
+        gui.updateActiveUsersUI(server.getClients(),message.getRoom());
     }
 
     public ChatServerInterface getServer() throws RemoteException {
@@ -192,13 +192,15 @@ class  ClientGUI extends JFrame implements Serializable  {
         frame.getContentPane().add(SendMessageButton);
     }
 
-    public void updateActiveUsersUI(List<ChatClientInterface> clients) {
+    public void updateActiveUsersUI(List<ChatClientInterface> clients, String roomID){
         System.out.println("Updating active users UI");
         activeUserListModel.clear();
         for (ChatClientInterface client : clients) {
             try {
                 System.out.println("Adding client: " + client.getClientID());
-                activeUserListModel.addElement(client.getClientID());
+                if(client.getRoomID().equals(roomID)){
+                    activeUserListModel.addElement(client.getClientID());
+                }
             } catch (RemoteException e) {
                 throw new RuntimeException(e);
             }
