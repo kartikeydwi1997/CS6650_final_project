@@ -12,7 +12,7 @@ import javax.transaction.xa.Xid;
 import com.mysql.cj.jdbc.MysqlXADataSource;
 import java.util.Random;
 
-public class DatabaseConnector {
+public class DatabaseConnector  {
     private Connection conn;
     private XADataSource xaDataSource;
     private XAConnection xaConnection;
@@ -36,7 +36,7 @@ public class DatabaseConnector {
         }
     }
 
-    public boolean insertMessage(String messageContent, String timestamp, String clientID, String roomID,MessageCallback callback) {
+    public boolean insertMessage(String messageContent, String timestamp, String clientID, String roomID) {
         try {
             xaResource.start(xid, XAResource.TMNOFLAGS);
             String sql = "INSERT INTO messages (message_id, client_id, room_id, message_content) VALUES (?, ?, ?, ?)";
@@ -47,10 +47,8 @@ public class DatabaseConnector {
             pstmt.setString(4, messageContent);
             pstmt.executeUpdate();
             pstmt.close();
-            callback.onSuccess(clientID,messageContent);
             return true;
         } catch (SQLException e) {
-            callback.onError(e);
             return false;
         } catch (XAException e) {
             return false;

@@ -42,8 +42,9 @@ class ChatClientImpl extends UnicastRemoteObject implements ChatClientInterface 
         return this.roomID;
     }
 
-    public void sendMessage(String message,MessageCallback callback) throws RemoteException {
-        server.broadcast(message, this,callback);
+    public void sendMessage(String message) throws RemoteException {
+        System.out.println("send message: "+message);
+        server.broadcast(message, this);
     }
 
     public void receiveMessage(ChatMessage message) throws RemoteException {
@@ -51,6 +52,7 @@ class ChatClientImpl extends UnicastRemoteObject implements ChatClientInterface 
         System.out.println("Timestamp: " + message.getTimestamp());
         System.out.println("Client " + message.getSender() + " from room ID:"+ message.getRoom() + ": "
                 + message.getContent());
+        gui.updateUI(message);
     }
 
     public ChatServerInterface getServer() throws RemoteException {
@@ -58,18 +60,19 @@ class ChatClientImpl extends UnicastRemoteObject implements ChatClientInterface 
     }
 }
 
-class ClientGUI extends JFrame implements Serializable  {
+class  ClientGUI extends JFrame implements Serializable  {
     private JFrame frame;
     private JList<String> activeUsersList;
     private Set<String> activeUsers;
     private DefaultListModel<String> activeUserListModel;
     private JTextField clientTextBoard;
-    private JTextArea clientMessageBoard;
+    private static JTextArea clientMessageBoard;
 
     private String message;
     private String sender;
 
     private ChatClientInterface client;
+
 
     public ClientGUI(ChatClientInterface client) throws RemoteException, SQLException {
         this.client = client;
@@ -79,6 +82,13 @@ class ClientGUI extends JFrame implements Serializable  {
         initialize();
     }
 
+    void updateUI(ChatMessage message){
+        String existingText = clientMessageBoard.getText();
+        String newText=(message.getSender()  + ": "
+                + message.getContent());
+        String text = existingText + "\n" + newText;
+        clientMessageBoard.setText(text);
+    }
 
     private void initialize() throws RemoteException, SQLException {
         //Initialize the frame and set the bounds
@@ -95,11 +105,6 @@ class ClientGUI extends JFrame implements Serializable  {
         activeUsersList.setBounds(12, 420, 327, 150);
         frame.getContentPane().add(activeUsersList);
 
-        //Create text area for the clients to read messages sent to other users or sent by other users
-//        clientMessageBoard = new JTextArea();
-//        clientMessageBoard.setEditable(false);
-//        clientMessageBoard.setBounds(12, 51, 530, 300);
-//        frame.getContentPane().add(clientMessageBoard);
         clientMessageBoard = new JTextArea();
         clientMessageBoard.setEditable(false);
 
@@ -108,40 +113,33 @@ class ClientGUI extends JFrame implements Serializable  {
         frame.getContentPane().add(scrollPane);
         final int[] last_message_id = {0};
 
-//        Timer timer = new Timer(2000, new ActionListener() {
-//            public void actionPerformed(ActionEvent e) {
-//
-//                try {
-//                    DatabaseConnector connector = new DatabaseConnector();
-//                    connector.connectToDatabase("jdbc:mysql://localhost:3306/db1");
-//                    String sql = "SELECT message_id, client_id, message_content FROM messages WHERE room_id ='" +
-//                            client.getRoomID() + "' AND message_id > " + last_message_id[0] + " ORDER BY message_id;";
-//                    ResultSet rs = connector.getAllMessages(sql);
-//                    String existingText = clientMessageBoard.getText();
-//                    while (rs.next()) {
-//                        last_message_id[0] = rs.getInt("message_id");
-//                        message = rs.getString("message_content");
-//                        sender = rs.getString("client_id");
-//                        String newText = "\n" + sender + ": " + message;
-//                        System.out.println("New text: " + newText);
-//                        clientMessageBoard.append(newText);
-//                        // Do something with the message data
-//                    }
-//
-//
-//                    String newText = existingText + "\n" + sender + ": " + message;
-//                    clientMessageBoard.setText(newText);
-//                    rs.close();
-//                    connector.commitTransaction();
-//                } catch (SQLException ex) {
-//                    System.out.println("shit");
-//                    // handle exceptions here
-//                } catch (RemoteException ex) {
-//                    throw new RuntimeException(ex);
-//                }
-//            }
-//        });
-//        timer.start();
+                try {
+                    DatabaseConnector connector = new DatabaseConnector();
+                    connector.connectToDatabase("jdbc:mysql://localhost:3306/db1");
+                    String sql = "SELECT message_id, client_id, message_content FROM messages WHERE room_id ='" +
+                            client.getRoomID() + "' AND message_id > " + last_message_id[0] + " ORDER BY message_id;";
+                    ResultSet rs = connector.getAllMessages(sql);
+
+                    while (rs.next()) {
+                        last_message_id[0] = rs.getInt("message_id");
+                        message = rs.getString("message_content");
+                        sender = rs.getString("client_id");
+                        String newText =  sender + ": " + message+ "\n";
+                        System.out.println("New text: " + newText);
+                        clientMessageBoard.append(newText);
+                        // Do something with the message data
+                    }
+
+                    String existingText = clientMessageBoard.getText();
+                    clientMessageBoard.setText(existingText);
+                    rs.close();
+                    connector.commitTransaction();
+                } catch (SQLException ex) {
+                    System.out.println("shit");
+                    // handle exceptions here
+                } catch (RemoteException ex) {
+                    throw new RuntimeException(ex);
+                }
 
 
 
@@ -174,20 +172,10 @@ class ClientGUI extends JFrame implements Serializable  {
                 String messageTextArea = clientTextBoard.getText();
                 if (messageTextArea != null && !messageTextArea.isEmpty()) {
                     try {
-                        client.sendMessage(messageTextArea, new MessageCallback() {
-                            @Override
-                            public void onError(Exception e) {
-                            }
-                            @Override
-                            public void onSuccess(String clientID, String messageContent)  {
-                                System.out.println();
-                                String existingText = clientMessageBoard.getText();
-                                String newText = existingText + "\n" + clientID + ": " + messageContent;
-                                clientMessageBoard.setText(newText);
-                            }
-                        });
+                        client.sendMessage(messageTextArea);
+                        clientTextBoard.setText("");    //Clear the text-box
 
-                        } catch (RemoteException ex) {
+                    } catch (RemoteException ex) {
                         throw new RuntimeException(ex);
                     }
                 }

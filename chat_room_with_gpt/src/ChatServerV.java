@@ -5,7 +5,7 @@ import java.rmi.registry.*;
 import java.util.*;
 import java.sql.*;
 
-public class ChatServerV extends UnicastRemoteObject implements ChatServerInterface {
+public class ChatServerV extends UnicastRemoteObject implements ChatServerInterface, Serializable  {
     private final List<ChatClientInterface> clients;
     private final List<ChatMessage> messages;
     private final LamportClock lamportClock;
@@ -24,7 +24,7 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
         }
     }
 
-    public synchronized void broadcast(String message, ChatClientInterface c,MessageCallback callback) throws RemoteException {
+    public synchronized void broadcast(String message, ChatClientInterface c) throws RemoteException {
         System.out.println("Broadcast message: "+message);
         System.out.println("Broadcast client: "+c.getClientID() + " from room ID: "+ c.getRoomID());
 
@@ -34,7 +34,7 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
         // Insert message into SQL database
         DatabaseCoordinator databaseCoordinator = new DatabaseCoordinator();
         if (databaseCoordinator.twoPCInsertMessage(chatMessage.getContent(), Integer.toString(chatMessage.getTimestamp()),
-                chatMessage.getSender(), chatMessage.getRoom(), callback)) {
+                chatMessage.getSender(), chatMessage.getRoom())) {
             messages.add(chatMessage);
             System.out.println("Message inserted into SQL database");
         } else {
@@ -50,6 +50,7 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
                 continue;
             } else {
                 client.receiveMessage(chatMessage);
+
             }
         }
     }

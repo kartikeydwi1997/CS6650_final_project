@@ -3,7 +3,7 @@ import java.rmi.*;
 public interface ChatClientInterface extends Remote {
     void receiveMessage(ChatMessage message) throws RemoteException;
 
-    void sendMessage(String message, MessageCallback messageCallback) throws RemoteException;
+    void sendMessage(String message) throws RemoteException;
 
     String getClientID() throws RemoteException;
 

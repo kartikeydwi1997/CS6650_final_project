@@ -6,7 +6,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-public class DatabaseCoordinator {
+public class DatabaseCoordinator{
     private final DatabaseConnector[] dbConnectors;
     private final DatabaseConnector dc1;
     private final DatabaseConnector dc2;
@@ -49,11 +49,11 @@ public class DatabaseCoordinator {
     }
 
 
-    public boolean twoPCInsertMessage(String message, String timestamp, String clientID, String roomID,MessageCallback callback) {
+    public boolean twoPCInsertMessage(String message, String timestamp, String clientID, String roomID) {
         List<Future<Boolean>> futuresPrepare = new ArrayList<>();
         // phase 1
         for (DatabaseConnector db : dbConnectors) {
-            Future<Boolean> future = executorService.submit(() -> db.insertMessage(message, timestamp, clientID, roomID,callback));
+            Future<Boolean> future = executorService.submit(() -> db.insertMessage(message, timestamp, clientID, roomID));
             futuresPrepare.add(future);
         }
         if (!checkFutures(futuresPrepare)) {

@@ -4,7 +4,7 @@ import java.util.List;
 public interface ChatServerInterface extends Remote {
     public void register(ChatClientInterface client) throws RemoteException;
 
-    void broadcast(String message, ChatClientInterface c,MessageCallback callback) throws RemoteException;
+    void broadcast(String message, ChatClientInterface c) throws RemoteException;
 
     List<ChatClientInterface> getClients() throws RemoteException;
 
