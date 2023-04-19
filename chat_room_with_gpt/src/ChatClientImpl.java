@@ -173,6 +173,11 @@ class  ClientGUI extends JFrame implements Serializable  {
                 if (messageTextArea != null && !messageTextArea.isEmpty()) {
                     try {
                         client.sendMessage(messageTextArea);
+                        String existingText = clientMessageBoard.getText();
+                        String newText=("You: "
+                                + messageTextArea);
+                        String text = existingText + "\n" + newText;
+                        clientMessageBoard.setText(text);
                         clientTextBoard.setText("");    //Clear the text-box
 
                     } catch (RemoteException ex) {
