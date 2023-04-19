@@ -59,6 +59,11 @@ class ChatClientImpl extends UnicastRemoteObject implements ChatClientInterface 
     public ChatServerInterface getServer() throws RemoteException {
         return server;
     }
+
+    @Override
+    public void exitApp() throws RemoteException {
+        server.removeClient(this);
+    }
 }
 
 class  ClientGUI extends JFrame implements Serializable  {
@@ -95,7 +100,7 @@ class  ClientGUI extends JFrame implements Serializable  {
         //Initialize the frame and set the bounds
         frame = new JFrame();
         frame.setBounds(100, 100, 888, 650);
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.getContentPane().setLayout(null);
         frame.setTitle(client.getClientID() + "'s console");
         frame.setVisible(true);
@@ -107,6 +112,23 @@ class  ClientGUI extends JFrame implements Serializable  {
         JScrollPane scrollPaneUser = new JScrollPane(activeUsersList);
         scrollPaneUser.setBounds(12, 420, 327, 150);
         frame.getContentPane().add(scrollPaneUser);
+
+        frame.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                if (JOptionPane.showConfirmDialog(frame,
+                        "Are you sure you want to close this window?", "Close Window?",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION){
+                    try {
+                        client.exitApp();
+                    } catch (RemoteException e) {
+                        throw new RuntimeException(e);
+                    }
+                    System.exit(0);
+                }
+            }
+        });
 
         clientMessageBoard = new JTextArea();
         clientMessageBoard.setEditable(false);
@@ -202,7 +224,7 @@ class  ClientGUI extends JFrame implements Serializable  {
                     activeUserListModel.addElement(client.getClientID());
                 }
             } catch (RemoteException e) {
-                throw new RuntimeException(e);
+                System.out.println("User is disconnected");
             }
         }
     }

@@ -25,6 +25,11 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
         }
     }
 
+    @Override
+    public void removeClient(ChatClientInterface client) throws RemoteException {
+        clients.remove(client);
+    }
+
 
     public synchronized void broadcast(String message, ChatClientInterface c) throws RemoteException {
         System.out.println("Broadcast message: "+message);
