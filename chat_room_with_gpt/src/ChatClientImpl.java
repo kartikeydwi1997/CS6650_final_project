@@ -32,6 +32,7 @@ class ChatClientImpl extends UnicastRemoteObject implements ChatClientInterface 
                 .lookup("rmi://" + SERVER_HOST + ":" + SERVER_PORT + "/ChatServer");
         server.register(this);
         gui = new ClientGUI(this);
+        gui.updateActiveUsersUI(server.getClients());
     }
 
     public String getClientID() {
@@ -43,7 +44,6 @@ class ChatClientImpl extends UnicastRemoteObject implements ChatClientInterface 
     }
 
     public void sendMessage(String message) throws RemoteException {
-        System.out.println("send message: "+message);
         server.broadcast(message, this);
     }
 
@@ -52,7 +52,8 @@ class ChatClientImpl extends UnicastRemoteObject implements ChatClientInterface 
         System.out.println("Timestamp: " + message.getTimestamp());
         System.out.println("Client " + message.getSender() + " from room ID:"+ message.getRoom() + ": "
                 + message.getContent());
-        gui.updateUI(message);
+        gui.updateMessageUI(message);
+        gui.updateActiveUsersUI(server.getClients());
     }
 
     public ChatServerInterface getServer() throws RemoteException {
@@ -82,7 +83,7 @@ class  ClientGUI extends JFrame implements Serializable  {
         initialize();
     }
 
-    void updateUI(ChatMessage message){
+    void updateMessageUI(ChatMessage message){
         String existingText = clientMessageBoard.getText();
         String newText=(message.getSender()  + ": "
                 + message.getContent());
@@ -103,7 +104,9 @@ class  ClientGUI extends JFrame implements Serializable  {
         activeUsersList.setModel(activeUserListModel);
         activeUsersList.setToolTipText("Active Users");
         activeUsersList.setBounds(12, 420, 327, 150);
-        frame.getContentPane().add(activeUsersList);
+        JScrollPane scrollPaneUser = new JScrollPane(activeUsersList);
+        scrollPaneUser.setBounds(12, 420, 327, 150);
+        frame.getContentPane().add(scrollPaneUser);
 
         clientMessageBoard = new JTextArea();
         clientMessageBoard.setEditable(false);
@@ -125,7 +128,6 @@ class  ClientGUI extends JFrame implements Serializable  {
                         message = rs.getString("message_content");
                         sender = rs.getString("client_id");
                         String newText =  sender + ": " + message+ "\n";
-                        System.out.println("New text: " + newText);
                         clientMessageBoard.append(newText);
                         // Do something with the message data
                     }
@@ -135,7 +137,6 @@ class  ClientGUI extends JFrame implements Serializable  {
                     rs.close();
                     connector.commitTransaction();
                 } catch (SQLException ex) {
-                    System.out.println("shit");
                     // handle exceptions here
                 } catch (RemoteException ex) {
                     throw new RuntimeException(ex);
@@ -148,6 +149,7 @@ class  ClientGUI extends JFrame implements Serializable  {
         labelActiveUser.setHorizontalAlignment(SwingConstants.LEFT);
         labelActiveUser.setBounds(12, 390, 95, 16);
         frame.getContentPane().add(labelActiveUser);
+
 
         //Create a text field for user to type a message to be sent to other users
         clientTextBoard = new JTextField();
@@ -188,5 +190,18 @@ class  ClientGUI extends JFrame implements Serializable  {
         });
         SendMessageButton.setBounds(559, 270, 100, 60);
         frame.getContentPane().add(SendMessageButton);
+    }
+
+    public void updateActiveUsersUI(List<ChatClientInterface> clients) {
+        System.out.println("Updating active users UI");
+        activeUserListModel.clear();
+        for (ChatClientInterface client : clients) {
+            try {
+                System.out.println("Adding client: " + client.getClientID());
+                activeUserListModel.addElement(client.getClientID());
+            } catch (RemoteException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }

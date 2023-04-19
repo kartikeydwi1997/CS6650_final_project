@@ -17,12 +17,14 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
         lamportClock = new LamportClock();
     }
 
+
     public synchronized void register(ChatClientInterface client) throws RemoteException {
         DatabaseCoordinator databaseCoordinator = new DatabaseCoordinator();
         if (databaseCoordinator.twoPCInsertClient(client.getClientID(), client.getRoomID())) {
             clients.add(client);
         }
     }
+
 
     public synchronized void broadcast(String message, ChatClientInterface c) throws RemoteException {
         System.out.println("Broadcast message: "+message);
