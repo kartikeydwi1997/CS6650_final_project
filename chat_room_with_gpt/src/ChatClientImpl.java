@@ -45,6 +45,9 @@ class ChatClientImpl extends UnicastRemoteObject implements ChatClientInterface 
 
     public void sendMessage(String message) throws RemoteException {
         server.broadcast(message, this);
+        if (message.contains("@BOT")) {
+            server.broadcastGPTANS(message, this);
+        }
     }
 
     public void receiveMessage(ChatMessage message) throws RemoteException {
@@ -54,6 +57,13 @@ class ChatClientImpl extends UnicastRemoteObject implements ChatClientInterface 
                 + message.getContent());
         gui.updateMessageUI(message);
         gui.updateActiveUsersUI(server.getClients(),message.getRoom());
+    }
+
+    public void receiveAnswer(ChatClientInterface c, ChatMessage message) throws RemoteException {
+        lamportClock.update(message.getTimestamp());
+        System.out.println("Timestamp: " + message.getTimestamp());
+        System.out.println("\u001B[31mChatGPT: \u001B[0m " + message.getContent());
+        gui.updateMessageUI(message);
     }
 
     public ChatServerInterface getServer() throws RemoteException {
@@ -131,6 +141,7 @@ class  ClientGUI extends JFrame implements Serializable  {
         });
 
         clientMessageBoard = new JTextArea();
+        clientMessageBoard.setLineWrap(true);
         clientMessageBoard.setEditable(false);
 
         JScrollPane scrollPane = new JScrollPane(clientMessageBoard); // add the text area to a scroll pane
@@ -196,14 +207,14 @@ class  ClientGUI extends JFrame implements Serializable  {
                 String messageTextArea = clientTextBoard.getText();
                 if (messageTextArea != null && !messageTextArea.isEmpty()) {
                     try {
-                        client.sendMessage(messageTextArea);
+
                         String existingText = clientMessageBoard.getText();
                         String newText=("You: "
                                 + messageTextArea);
                         String text = existingText + "\n" + newText;
                         clientMessageBoard.setText(text);
                         clientTextBoard.setText("");    //Clear the text-box
-
+                        client.sendMessage(messageTextArea);
                     } catch (RemoteException ex) {
                         throw new RuntimeException(ex);
                     }

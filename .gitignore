@@ -3,8 +3,12 @@
 *.iml
 *.iws
 *.ipr
+<<<<<<< HEAD
 *.class
 out/
+=======
+
+>>>>>>> integrate_gpt
 # Visual Studio Code
 .vscode/
 *.code-workspace

@@ -11,4 +11,6 @@ public interface ChatClientInterface extends Remote {
 
     void exitApp() throws RemoteException;
     ChatServerInterface getServer() throws RemoteException;
+
+    public void receiveAnswer(ChatClientInterface c, ChatMessage message) throws RemoteException;
 }

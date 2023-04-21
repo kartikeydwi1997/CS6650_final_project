@@ -6,9 +6,10 @@ public interface ChatServerInterface extends Remote {
 
     void removeClient(ChatClientInterface client) throws RemoteException;
 
-    void broadcast(String message, ChatClientInterface c) throws RemoteException;
-
     List<ChatClientInterface> getClients() throws RemoteException;
 
-    List<ChatMessage> sendBack() throws RemoteException;
+    public void broadcast(String message, ChatClientInterface c) throws RemoteException;
+
+    public void broadcastGPTANS(String message, ChatClientInterface c) throws RemoteException;
+
 }
