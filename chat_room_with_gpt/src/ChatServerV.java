@@ -26,6 +26,7 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
         System.out.println("Broadcast client: " + c.getClientID() + " from room ID: " + c.getRoomID());
 
         ChatMessage chatMessage = new ChatMessage(c.getClientID(), c.getRoomID(), message);
+        chatMessage.setTimestamp(lamportClock.tick());
 
         // Insert message into SQL database
         DatabaseCoordinator databaseCoordinator = new DatabaseCoordinator();
@@ -49,8 +50,8 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
     }
 
     public synchronized void broadcastGPTANS(String message, ChatClientInterface c) throws RemoteException {
-        ChatMessage botAnswer = new ChatMessage(c.getClientID(), c.getRoomID(), "null");
-        String answer = null;
+        ChatMessage botAnswer = new ChatMessage(c.getClientID(), c.getRoomID(), null);
+        String answer;
 
         // I need to get ride of "@BOT" in the message
         String cleanQuestion = message.replace("@BOT ", "");
@@ -60,10 +61,10 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
         botAnswer.setContent(answer);
         botAnswer.setTimestamp(lamportClock.tick());
         for (ChatClientInterface client : clients) {
-            System.out.println("In side for loop broadcast client: " + client.getClientID() + " from room ID: "
-                    + client.getRoomID());
-
-            client.receiveAnswer(c, botAnswer);
+            System.out.println("GPT broadcast: " + client.getRoomID() + " " + c.getRoomID());
+            if (Objects.equals(client.getRoomID(), c.getRoomID())) {
+                client.receiveAnswer(c, botAnswer);
+            }
         }
 
     }
