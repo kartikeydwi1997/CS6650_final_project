@@ -191,6 +191,12 @@ class  ClientGUI extends JFrame implements Serializable  {
         frame.getContentPane().add(clientTextBoard);
         clientTextBoard.setColumns(10);
 
+        //Create a label for the room name
+        JLabel labelRoom = new JLabel("Welcome to room " + client.getRoomID());
+        labelRoom.setHorizontalAlignment(SwingConstants.LEFT);
+        labelRoom.setBounds(12, 25, 150, 16);
+        frame.getContentPane().add(labelRoom);
+
         //Create a label for the clientTextBoard
         JLabel labelMessage = new JLabel("Enter Message");
         labelMessage.setHorizontalAlignment(SwingConstants.LEFT);
