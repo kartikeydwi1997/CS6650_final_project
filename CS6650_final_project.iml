@@ -10,6 +10,15 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="mysql-connector-j-8.0.32522bb1d22ba92c935a4d7ef554f0a888ce106b7fbdb96edaac6b0b95b31523ea" level="project" />
+    <orderEntry type="library" exported="" name="mysql-connector-j-8.0.32522bb1d22ba92c935a4d7ef554f0a888ce106b7fbdb96edaac6b0b95b31523ea" level="project" />
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/chat_room_with_gpt/lib/org.json4732ecef5c0e903110a86c426d7e7555e3673af47092bbb73abb1799b0a28d1a.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
