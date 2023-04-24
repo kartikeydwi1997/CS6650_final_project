@@ -1,9 +1,7 @@
-import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Savepoint;
 import javax.sql.XAConnection;
 import javax.sql.XADataSource;
 import javax.transaction.xa.XAException;
@@ -12,13 +10,21 @@ import javax.transaction.xa.Xid;
 import com.mysql.cj.jdbc.MysqlXADataSource;
 import java.util.Random;
 
+/**
+ * A class that handles the insertion and retrieval of data from a MySQL database
+ * for the chat application, using two-phase commit protocol for data consistency.
+ */
 public class DatabaseConnector  {
     private Connection conn;
-    private XADataSource xaDataSource;
-    private XAConnection xaConnection;
     private XAResource xaResource;
     private Xid xid;
 
+    /**
+     * Inserts a new client with their room id into the chat database.
+     * @param clientID the client that has registered
+     * @param roomID the room into which the client has registered
+     * @return True if the insertion was successful, false otherwise.
+     */
     public boolean insertClient(String clientID, String roomID) {
         try {
             xaResource.start(xid, XAResource.TMNOFLAGS);
@@ -29,13 +35,20 @@ public class DatabaseConnector  {
             pstmt.executeUpdate();
             pstmt.close();
             return true;
-        } catch (SQLException se) {
-            return false;
-        } catch (XAException e) {
+        } catch (SQLException | XAException se) {
+            se.printStackTrace();
             return false;
         }
     }
 
+    /**
+     * Inserts a new message into the chat database.
+     * @param messageContent The message to be inserted into the database.
+     * @param timestamp The timestamp of the message to be inserted into the database.
+     * @param clientID The client sending the message.
+     * @param roomID The room the message was sent to.
+     * @return True if the insertion was successful, false otherwise.
+     */
     public boolean insertMessage(String messageContent, String timestamp, String clientID, String roomID) {
         try {
             xaResource.start(xid, XAResource.TMNOFLAGS);
@@ -48,27 +61,35 @@ public class DatabaseConnector  {
             pstmt.executeUpdate();
             pstmt.close();
             return true;
-        } catch (SQLException e) {
-            return false;
-        } catch (XAException e) {
+        } catch (SQLException | XAException e) {
+            e.printStackTrace();
             return false;
         }
     }
 
+    /**
+     * Connect to the chat database.
+     * @param url URL of the chat database to connect to
+     */
     public void connectToDatabase(String url) {
         try {
             String user = "root";
             String password = "";
 
-            xaDataSource = createXADatasource(url, user, password);
-            xaConnection = xaDataSource.getXAConnection();
+            XADataSource xaDataSource = createXADatasource(url, user, password);
+            XAConnection xaConnection = xaDataSource.getXAConnection();
             conn = xaConnection.getConnection();
             xaResource = xaConnection.getXAResource();
             xid = createXid();
         } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
+    /**
+     * Helper method to connect to the database using the user and
+     * password details
+     */
     private MysqlXADataSource createXADatasource(String url, String user, String password) {
         MysqlXADataSource dataSource = new MysqlXADataSource();
         dataSource.setUrl(url);
@@ -77,7 +98,10 @@ public class DatabaseConnector  {
         return dataSource;
     }
 
-    public Xid createXid() {
+    /**
+     * Helper method to create XID for the database transactions.
+     */
+    private Xid createXid() {
         byte[] gid = new byte[1];
         byte[] bid = new byte[1];
         new Random().nextBytes(gid);
@@ -100,6 +124,10 @@ public class DatabaseConnector  {
         };
     }
 
+    /**
+     * Commits the transaction to the chat database.
+     * @return True if the commit was successful, false otherwise.
+     */
     public boolean commitTransaction() {
         try {
             xaResource.end(xid, XAResource.TMSUCCESS);
@@ -113,10 +141,15 @@ public class DatabaseConnector  {
                 return false;
             }
         } catch (XAException e) {
+            e.printStackTrace();
             return false;
         }
     }
 
+    /**
+     * Retrieves all messages from the chat database for the given parameters.
+     * @return Messages from the chat database.
+     */
     public ResultSet getAllMessages(String sql) {
         try {
             PreparedStatement pstmt = conn.prepareStatement(sql);

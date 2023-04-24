@@ -3,16 +3,27 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+/**
+ * This class creates the login window for the user to
+ * register into a particular room for the chat application.
+ */
 public class Login extends JFrame {
-    //Declare variables
+    // Declare JSwing variables
     private JFrame frame;
     private JTextField clientIdTextField;
     private JTextField roomIdTextField;
 
+    /**
+     * Initializes the Login window class by creating and configuring the GUI components.
+     */
     public Login() {
         initialize();
     }
 
+    /**
+     * Creates the Login window class and handles the submit button click event
+     * and launching the chat room window.
+     */
     private void initialize() {
         //Create frame and set bounds to it
         frame = new JFrame();
@@ -49,6 +60,7 @@ public class Login extends JFrame {
         JButton loginButton = new JButton("Connect");
         loginButton.setBounds(200, 150, 100, 50);
         frame.getContentPane().add(loginButton);
+
         //Action listener for clicking connect button
         loginButton.addActionListener(
                 new ActionListener() {
@@ -67,6 +79,10 @@ public class Login extends JFrame {
         );
     }
 
+    /**
+     * Launches the Login window
+     * @param args none
+     */
     public static void main(String[] args) {
         EventQueue.invokeLater(
             new Runnable() {
@@ -82,5 +98,4 @@ public class Login extends JFrame {
             }
         );
     }
-
 }

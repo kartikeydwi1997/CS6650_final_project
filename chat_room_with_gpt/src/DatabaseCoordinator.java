@@ -1,4 +1,3 @@
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -6,15 +5,20 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+/**
+ * This class acts as the coordinator for the two-phase commit protocol when
+ * inserting data into database replicas.
+ */
 public class DatabaseCoordinator{
     private final DatabaseConnector[] dbConnectors;
-    private final DatabaseConnector dc1;
-    private final DatabaseConnector dc2;
     private final ExecutorService executorService = Executors.newFixedThreadPool(2);
 
+    /**
+     * Connects to the database replicas.
+     */
     public DatabaseCoordinator() {
-        dc1 = new DatabaseConnector();
-        dc2 = new DatabaseConnector();
+        DatabaseConnector dc1 = new DatabaseConnector();
+        DatabaseConnector dc2 = new DatabaseConnector();
         dc1.connectToDatabase("jdbc:mysql://localhost:3306/db1");
         dc2.connectToDatabase("jdbc:mysql://localhost:3306/db2");
 
@@ -23,6 +27,13 @@ public class DatabaseCoordinator{
         dbConnectors[1] = dc2;
     }
 
+    /**
+     * Inserts the client logging in with the room id into each replica database
+     * using the two-phase commit protocol.
+     * @param clientID client logging in
+     * @param roomID room client wants to enter
+     * @return true or false whether the client was successfully inserted
+     */
     public boolean twoPCInsertClient(String clientID, String roomID) {
         List<Future<Boolean>> futuresPrepare = new ArrayList<>();
 
@@ -48,6 +59,15 @@ public class DatabaseCoordinator{
         return true;
     }
 
+    /**
+     * Inserts the message sent by each client in the chat room
+     * with the room id into each replica database using the two-phase commit protocol.
+     * @param message message entered by client
+     * @param timestamp lamport timestamp for each message
+     * @param clientID client sending the message
+     * @param roomID room the client sent message
+     * @return true or false whether the message was successfully inserted
+     */
     public boolean twoPCInsertMessage(String message, String timestamp, String clientID, String roomID) {
         List<Future<Boolean>> futuresPrepare = new ArrayList<>();
         // phase 1
@@ -59,7 +79,6 @@ public class DatabaseCoordinator{
         if (!checkFutures(futuresPrepare)) {
             return false;
         }
-        System.out.println("Prepare phase done");
         List<Future<Boolean>> futuresCommit = new ArrayList<>();
         // phase 2
         for (DatabaseConnector db : dbConnectors) {
@@ -67,13 +86,14 @@ public class DatabaseCoordinator{
             futuresCommit.add(future);
         }
         if (!checkFutures(futuresCommit)) {
-            System.out.println("Futures failed");
             return false;
         }
-        System.out.println("Commit phase done");
         return true;
     }
 
+    /**
+     * Helper method to check if all the replicas agreed to commit.
+     */
     private boolean checkFutures(List<Future<Boolean>> futures) {
         int count = 0;
         try {
@@ -88,7 +108,7 @@ public class DatabaseCoordinator{
                 }
             }
         } catch (ExecutionException | InterruptedException e) {
-            System.out.println("Error in checking futures: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
         return count == 2;

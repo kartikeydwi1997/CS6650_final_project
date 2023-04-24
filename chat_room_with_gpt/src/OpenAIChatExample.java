@@ -8,8 +8,16 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import java.util.Scanner;
 
+/**
+ * This class uses ChatGPT to generate responses for the chat application.
+ */
 public class OpenAIChatExample {
 
+    /**
+     * Generates a response to the input text using the ChatGPT model.
+     * @param prompt The user's input text.
+     * @return The chatbot's response to the input text.
+     */
     public static String getOpenAIResponse(String prompt) {
         String url = "https://api.openai.com/v1/chat/completions";
         String data = "{\n" +
@@ -23,9 +31,7 @@ public class OpenAIChatExample {
                 "    ]\n" +
                 "}";
 
-        try
-
-        {
+        try {
             URL urlObj = new URL(url);
             HttpURLConnection con = (HttpURLConnection) urlObj.openConnection();
             con.setRequestMethod("POST");
@@ -38,8 +44,6 @@ public class OpenAIChatExample {
             wr.writeBytes(data);
             wr.flush();
             wr.close();
-
-            int responseCode = con.getResponseCode();
 
             BufferedReader in = new BufferedReader(
                     new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8));
@@ -56,15 +60,10 @@ public class OpenAIChatExample {
             JSONArray choicesArr = jsonObj.getJSONArray("choices");
             JSONObject messageObj = choicesArr.getJSONObject(0).getJSONObject("message");
             String responseMessage = messageObj.getString("content");
-            // System.out.println("Response Code: " + responseCode);
-            // System.out.println("Response Body: " + response.toString());
-            // System.out.println("Response Message: " + responseMessage);
-            return responseMessage.toString();
+            return responseMessage;
         } catch (Exception e) {
-            System.out.println("Exception: " + e.getMessage());
             return null;
         }
-
     }
 
     public static void main(String[] args) {
