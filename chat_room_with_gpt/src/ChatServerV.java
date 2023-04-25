@@ -4,11 +4,16 @@ import java.rmi.server.*;
 import java.rmi.registry.*;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.*;
 
+/**
+ * The Server class is responsible for managing the chat room application by hosting
+ * an RMI server and registering remote objects for communication with clients.
+ * It implements the ChatRoomServer interface to provide methods for clients to connect,
+ * disconnect, and send messages to other clients and the GPT bot in the chat room.
+ */
 public class ChatServerV extends UnicastRemoteObject implements ChatServerInterface, Serializable  {
     private final List<ChatClientInterface> clients;
     private final List<ChatMessage> messages;
@@ -21,7 +26,11 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
         lamportClock = new LamportClock();
     }
 
-
+    /**
+     * Registers a new client to the database using two phase commit protocol.
+     * @param client new client registering
+     * @throws RemoteException thrown when remote invocation fails
+     */
     public synchronized void register(ChatClientInterface client) throws RemoteException {
         DatabaseCoordinator databaseCoordinator = new DatabaseCoordinator();
         if (databaseCoordinator.twoPCInsertClient(client.getClientID(), client.getRoomID())) {
@@ -29,12 +38,23 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
         }
     }
 
+    /**
+     * Removes a client from the active clients list when they log out.
+     * @param client client exiting the app
+     * @throws RemoteException thrown when remote invocation fails
+     */
     @Override
     public void removeClient(ChatClientInterface client) throws RemoteException {
         clients.remove(client);
     }
 
-
+    /**
+     * Broadcasts a message sent by a client to a room to all the clients who
+     * are registered to that room.
+     * @param message message entered by the client
+     * @param c client who entered the message
+     * @throws RemoteException thrown when remote invocation fails
+     */
     public synchronized void broadcast(String message, ChatClientInterface c) throws RemoteException {
 
         ChatMessage chatMessage = new ChatMessage(c.getClientID(), c.getRoomID(), message);
@@ -57,12 +77,23 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
         }
     }
 
-
+    /**
+     * Gets a list of all the active clients in the chat application.
+     * @return list of active clients
+     * @throws RemoteException thrown when remote invocation fails
+     */
     @Override
     public List<ChatClientInterface> getClients() throws RemoteException {
         return clients;
     }
 
+    /**
+     * Broadcasts the reply from ChatGPT for the prompt sent by a client
+     * to a room to all the clients who are registered to that room.
+     * @param message message entered by the client
+     * @param c client who entered the message
+     * @throws RemoteException thrown when remote invocation fails
+     */
     public synchronized void broadcastGPTANS(String message, ChatClientInterface c) throws RemoteException {
         ChatMessage botAnswer = new ChatMessage("ChatGPT", c.getRoomID(), null);
         String answer;
@@ -108,6 +139,5 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
             } catch (SQLException e) {
                 e.printStackTrace();
             }
-
     }
 }
