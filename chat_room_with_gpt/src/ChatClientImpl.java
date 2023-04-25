@@ -5,14 +5,13 @@ import java.net.MalformedURLException;
 import java.rmi.*;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.*;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.StringTokenizer;
-
 import java.io.Serializable;
-// This class implements the ChatClientInterface, which is the remote interface
-// that clients use to receive messages from the server.
+
+/**
+ * This class implements the ChatClientInterface, which is the remote interface
+ * that clients use to send to and receive messages from the server.
+ */
 class ChatClientImpl extends UnicastRemoteObject implements ChatClientInterface {
     private static final String SERVER_HOST = "localhost";
     private static final int SERVER_PORT = 3000;
@@ -22,8 +21,11 @@ class ChatClientImpl extends UnicastRemoteObject implements ChatClientInterface 
     private final ChatServerInterface server;
     private final ClientGUI gui;
 
-
-
+    /**
+     * Connect to server using RMI and create the user in the room provided.
+     * @param clientID new client registering
+     * @param roomID room where client is registering
+     */
     public ChatClientImpl(String clientID, String roomID) throws RemoteException, MalformedURLException, NotBoundException, SQLException {
         this.clientID = clientID;
         this.roomID = roomID;
@@ -35,14 +37,32 @@ class ChatClientImpl extends UnicastRemoteObject implements ChatClientInterface 
         gui.updateActiveUsersUI(server.getClients(),roomID);
     }
 
-    public String getClientID() {
+    /**
+     * Get the client id of current user.
+     * @return client id
+     * @throws RemoteException thrown when remote invocation fails.
+     */
+    @Override
+    public String getClientID() throws RemoteException {
         return this.clientID;
     }
 
-    public String getRoomID() {
+    /**
+     * Get the room id where the current client is registered
+     * @return room id
+     * @throws RemoteException thrown when remote invocation fails.
+     */
+    @Override
+    public String getRoomID() throws RemoteException {
         return this.roomID;
     }
 
+    /**
+     * Sends message to the server.
+     * @param message message sent by current client
+     * @throws RemoteException thrown when remote invocation fails.
+     */
+    @Override
     public void sendMessage(String message) throws RemoteException {
         server.broadcast(message, this);
         if (message.contains("@BOT")) {
@@ -50,6 +70,13 @@ class ChatClientImpl extends UnicastRemoteObject implements ChatClientInterface 
         }
     }
 
+    /**
+     * Receive messages sent by other clients in the same room
+     * from the server.
+     * @param message message sent by other clients
+     * @throws RemoteException thrown when remote invocation fails.
+     */
+    @Override
     public void receiveMessage(ChatMessage message) throws RemoteException {
         lamportClock.update(message.getTimestamp());
         System.out.println("Timestamp: " + message.getTimestamp());
@@ -59,6 +86,14 @@ class ChatClientImpl extends UnicastRemoteObject implements ChatClientInterface 
         gui.updateActiveUsersUI(server.getClients(),message.getRoom());
     }
 
+    /**
+     * Receive ChatGPT answers replied to questions sent by other
+     * clients in the same room from the server.
+     * @param c client id prompting GPT
+     * @param message Prompt made by the client
+     * @throws RemoteException thrown when remote invocation fails.
+     */
+    @Override
     public void receiveAnswer(ChatClientInterface c, ChatMessage message) throws RemoteException {
         lamportClock.update(message.getTimestamp());
         System.out.println("Timestamp: " + message.getTimestamp());
@@ -66,38 +101,49 @@ class ChatClientImpl extends UnicastRemoteObject implements ChatClientInterface 
         gui.updateMessageUI(message);
     }
 
-    public ChatServerInterface getServer() throws RemoteException {
-        return server;
-    }
-
+    /**
+     * Disconnects the client from the application
+     * @throws RemoteException thrown when remote invocation fails.
+     */
     @Override
     public void exitApp() throws RemoteException {
         server.removeClient(this);
     }
 }
 
+/**
+ * This class defines the Chat Window GUI for each client when
+ * they register for the app and enter a room to chat with other
+ * clients in. This window has a chat area box to show chat history,
+ * a text box to enter a new message and an active users list of the
+ * current room.
+ */
 class  ClientGUI extends JFrame implements Serializable  {
     private JFrame frame;
-    private JList<String> activeUsersList;
-    private Set<String> activeUsers;
-    private DefaultListModel<String> activeUserListModel;
+    private final JList<String> activeUsersList;
+    private final DefaultListModel<String> activeUserListModel;
     private JTextField clientTextBoard;
     private static JTextArea clientMessageBoard;
+    private final ChatClientInterface client;
 
-    private String message;
-    private String sender;
-
-    private ChatClientInterface client;
-
-
+    /**
+     * Initialzes the chat window.
+     * @param client client's console
+     * @throws RemoteException thrown when remote invocation fails
+     * @throws SQLException thrown when SQL query in invalid
+     */
     public ClientGUI(ChatClientInterface client) throws RemoteException, SQLException {
         this.client = client;
-        activeUsers = new HashSet<>();
         activeUserListModel = new DefaultListModel<>();
         activeUsersList = new JList<>();
         initialize();
     }
 
+    /**
+     * Updates the chat area box with the most recent message
+     * sent by any client in the room.
+     * @param message message entered by an active user of room
+     */
     void updateMessageUI(ChatMessage message){
         String existingText = clientMessageBoard.getText();
         String newText=(message.getSender()  + ": "
@@ -106,7 +152,11 @@ class  ClientGUI extends JFrame implements Serializable  {
         clientMessageBoard.setText(text);
     }
 
-    private void initialize() throws RemoteException, SQLException {
+    /**
+     * Creates the GUI window using Java Swing elements
+     * @throws RemoteException thrown when remote invocation fails
+     */
+    private void initialize() throws RemoteException {
         //Initialize the frame and set the bounds
         frame = new JFrame();
         frame.setBounds(100, 100, 888, 650);
@@ -158,9 +208,9 @@ class  ClientGUI extends JFrame implements Serializable  {
 
                     while (rs.next()) {
                         last_message_id[0] = rs.getInt("message_id");
-                        message = rs.getString("message_content");
-                        sender = rs.getString("client_id");
-                        String newText =  sender + ": " + message+ "\n";
+                        String message = rs.getString("message_content");
+                        String sender = rs.getString("client_id");
+                        String newText =  sender + ": " + message + "\n";
                         clientMessageBoard.append(newText);
                         // Do something with the message data
                     }
@@ -231,17 +281,20 @@ class  ClientGUI extends JFrame implements Serializable  {
         frame.getContentPane().add(SendMessageButton);
     }
 
+    /**
+     * Updates the list of active users in the room as and when
+     * a new client registers
+     * @param clients list of active clients
+     * @param roomID room the chat window is for
+     */
     public void updateActiveUsersUI(List<ChatClientInterface> clients, String roomID){
-        System.out.println("Updating active users UI");
         activeUserListModel.clear();
         for (ChatClientInterface client : clients) {
             try {
-                System.out.println("Adding client: " + client.getClientID());
                 if(client.getRoomID().equals(roomID)){
                     activeUserListModel.addElement(client.getClientID());
                 }
             } catch (RemoteException e) {
-                System.out.println("User is disconnected");
             }
         }
     }
