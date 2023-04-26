@@ -3,7 +3,7 @@
 ### 1. In order to setup the project you need to add the dependency in your 
     > File->Project Structure-> Module
 
-### 2. The next step is to import the Database. You can find the sql file in the root directory of the project. Import the file in your mysql workbench or any other database management tool.
+### 2. The next step is to import the Database. You can find the sql file named as BSDS.ncx in the root directory of the project. Import the file in your mysql workbench or any other database management tool.
 
 ### 3. The connection name is BSDS, and it has two databases db1 and db2. You can change the connection name in the code if you want to use a different name.
 
