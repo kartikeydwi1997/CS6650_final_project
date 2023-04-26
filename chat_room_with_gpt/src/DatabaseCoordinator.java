@@ -1,5 +1,9 @@
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -16,15 +20,26 @@ public class DatabaseCoordinator{
     /**
      * Connects to the database replicas.
      */
-    public DatabaseCoordinator() {
+    public DatabaseCoordinator() throws IOException {
         DatabaseConnector dc1 = new DatabaseConnector();
         DatabaseConnector dc2 = new DatabaseConnector();
-        dc1.connectToDatabase("jdbc:mysql://localhost:3306/db1");
-        dc2.connectToDatabase("jdbc:mysql://localhost:3306/db2");
+        getURLs(dc1, dc2);
+//        dc1.connectToDatabase("jdbc:mysql://localhost:3306/db1");
+//        dc2.connectToDatabase("jdbc:mysql://localhost:3306/db2");
 
         dbConnectors = new DatabaseConnector[2];
         dbConnectors[0] = dc1;
         dbConnectors[1] = dc2;
+    }
+
+    private void getURLs(DatabaseConnector dc1, DatabaseConnector dc2) throws IOException {
+        Properties props = new Properties();
+        FileInputStream fis = new FileInputStream("chat_room_with_gpt/src/DBCred.properties");
+        props.load(fis);
+        String db1 = props.getProperty("db1");
+        String db2 = props.getProperty("db2");
+        dc1.connectToDatabase(db1);
+        dc2.connectToDatabase(db2);
     }
 
     /**

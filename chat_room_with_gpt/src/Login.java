@@ -16,15 +16,16 @@ public class Login extends JFrame {
     /**
      * Initializes the Login window class by creating and configuring the GUI components.
      */
-    public Login() {
-        initialize();
-    }
+//    public Login() {
+//        initialize();
+//    }
 
     /**
      * Creates the Login window class and handles the submit button click event
      * and launching the chat room window.
      */
-    private void initialize() {
+    private void initialize(String[] args) {
+        int portNumber = Integer.parseInt(args[0]);
         //Create frame and set bounds to it
         frame = new JFrame();
         frame.setBounds(100, 100, 350, 250);
@@ -69,7 +70,7 @@ public class Login extends JFrame {
                             String clientId = clientIdTextField.getText();
                             String roomId = roomIdTextField.getText();
 
-                            new ChatClientImpl(clientId, roomId);
+                            new ChatClientImpl(clientId, roomId,portNumber);
                             frame.dispose();
                         } catch(Exception ex) {
                             ex.printStackTrace();
@@ -90,6 +91,7 @@ public class Login extends JFrame {
                     try {
                         //Make login window visible
                         Login window = new Login();
+                        window.initialize(args);
                         window.frame.setVisible(true);
                     } catch (Exception e) {
                         e.printStackTrace();

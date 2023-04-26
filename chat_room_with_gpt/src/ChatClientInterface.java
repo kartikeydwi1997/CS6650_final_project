@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.rmi.*;
 
 /**
@@ -16,12 +17,12 @@ public interface ChatClientInterface extends Remote {
      */
     void receiveMessage(ChatMessage message) throws RemoteException;
 
-    /**
+     /**
      * Sends message to the server.
      * @param message message sent by current client
      * @throws RemoteException thrown when remote invocation fails.
      */
-    void sendMessage(String message) throws RemoteException;
+    void sendMessage(String message) throws IOException;
 
     /**
      * Get the client id of current user.

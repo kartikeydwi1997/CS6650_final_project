@@ -1,3 +1,6 @@
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.Serializable;
 import java.rmi.*;
 import java.rmi.server.*;
@@ -26,12 +29,12 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
         lamportClock = new LamportClock();
     }
 
-    /**
+     /**
      * Registers a new client to the database using two phase commit protocol.
      * @param client new client registering
      * @throws RemoteException thrown when remote invocation fails
      */
-    public synchronized void register(ChatClientInterface client) throws RemoteException {
+    public synchronized void register(ChatClientInterface client) throws IOException {
         DatabaseCoordinator databaseCoordinator = new DatabaseCoordinator();
         if (databaseCoordinator.twoPCInsertClient(client.getClientID(), client.getRoomID())) {
             clients.add(client);
@@ -48,6 +51,7 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
         clients.remove(client);
     }
 
+
     /**
      * Broadcasts a message sent by a client to a room to all the clients who
      * are registered to that room.
@@ -55,7 +59,7 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
      * @param c client who entered the message
      * @throws RemoteException thrown when remote invocation fails
      */
-    public synchronized void broadcast(String message, ChatClientInterface c) throws RemoteException {
+    public synchronized void broadcast(String message, ChatClientInterface c) throws IOException {
 
         ChatMessage chatMessage = new ChatMessage(c.getClientID(), c.getRoomID(), message);
         chatMessage.setTimestamp(lamportClock.tick());
@@ -111,23 +115,34 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
 
     public static void main(String[] args) {
         try {
+            Properties props = new Properties();
+            FileInputStream fis = new FileInputStream("chat_room_with_gpt/src/DBCred.properties");
+            props.load(fis);
+            String db1 = props.getProperty("db1");
+            String db2 = props.getProperty("db2");
+
             // create the server object
             ChatServerV server = new ChatServerV();
+            int port=Integer.parseInt(args[0]);
             // create the RMI registry and bind the server object to it
-            Registry registry = LocateRegistry.createRegistry(3000);
+            Registry registry = LocateRegistry.createRegistry(port);
             registry.rebind("ChatServer", server);
             System.out.println("Chat server started");
-            deleteDatabase("jdbc:mysql://localhost:3306/db1");
-            deleteDatabase("jdbc:mysql://localhost:3306/db2");
+            deleteDatabase(db1);
+            deleteDatabase(db2);
         } catch (Exception e) {
             System.err.println("Chat server exception: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    private static void deleteDatabase(String url) {
-            String user = "root";
-            String password = "";
+    private static void deleteDatabase(String url) throws IOException {
+            Properties props = new Properties();
+            FileInputStream fis = new FileInputStream("chat_room_with_gpt/src/DBCred.properties");
+            props.load(fis);
+            String user = props.getProperty("username");
+            String password = props.getProperty("password");
+
             String sql1 = "DELETE FROM messages";
             String sql2 = "DELETE FROM clients";
             try (Connection conn = DriverManager.getConnection(url, user, password);

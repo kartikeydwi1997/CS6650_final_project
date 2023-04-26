@@ -1,3 +1,6 @@
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -8,6 +11,8 @@ import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 import com.mysql.cj.jdbc.MysqlXADataSource;
+
+import java.util.Properties;
 import java.util.Random;
 
 /**
@@ -73,15 +78,21 @@ public class DatabaseConnector  {
      */
     public void connectToDatabase(String url) {
         try {
-            String user = "root";
-            String password = "";
+            Properties props = new Properties();
+            FileInputStream fis = new FileInputStream("chat_room_with_gpt/src/DBCred.properties");
+            props.load(fis);
+            String user = props.getProperty("username");
+            String password = props.getProperty("password");
+
 
             XADataSource xaDataSource = createXADatasource(url, user, password);
             XAConnection xaConnection = xaDataSource.getXAConnection();
             conn = xaConnection.getConnection();
             xaResource = xaConnection.getXAResource();
             xid = createXid();
-        } catch (SQLException e) {
+        } catch (SQLException | FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

@@ -1,11 +1,18 @@
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.rmi.*;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.*;
 import java.util.List;
+import java.util.Properties;
+import java.util.Set;
+import java.util.StringTokenizer;
+
 import java.io.Serializable;
 
 /**
@@ -14,7 +21,6 @@ import java.io.Serializable;
  */
 class ChatClientImpl extends UnicastRemoteObject implements ChatClientInterface {
     private static final String SERVER_HOST = "localhost";
-    private static final int SERVER_PORT = 3000;
     private final String clientID;
     private final String roomID;
     private final LamportClock lamportClock;
@@ -26,7 +32,7 @@ class ChatClientImpl extends UnicastRemoteObject implements ChatClientInterface 
      * @param clientID new client registering
      * @param roomID room where client is registering
      */
-    public ChatClientImpl(String clientID, String roomID) throws RemoteException, MalformedURLException, NotBoundException, SQLException {
+    public ChatClientImpl(String clientID, String roomID, int SERVER_PORT) throws IOException, NotBoundException, SQLException {
         this.clientID = clientID;
         this.roomID = roomID;
         this.lamportClock = new LamportClock();
@@ -63,7 +69,7 @@ class ChatClientImpl extends UnicastRemoteObject implements ChatClientInterface 
      * @throws RemoteException thrown when remote invocation fails.
      */
     @Override
-    public void sendMessage(String message) throws RemoteException {
+    public void sendMessage(String message) throws IOException {
         server.broadcast(message, this);
         if (message.contains("@BOT")) {
             server.broadcastGPTANS(message, this);
@@ -200,8 +206,12 @@ class  ClientGUI extends JFrame implements Serializable  {
         final int[] last_message_id = {0};
 
                 try {
+                    Properties props = new Properties();
+                    FileInputStream fis = new FileInputStream("chat_room_with_gpt/src/DBCred.properties");
+                    props.load(fis);
+                    String db1 = props.getProperty("db1");
                     DatabaseConnector connector = new DatabaseConnector();
-                    connector.connectToDatabase("jdbc:mysql://localhost:3306/db1");
+                    connector.connectToDatabase(db1);
                     String sql = "SELECT message_id, client_id, message_content FROM messages WHERE room_id ='" +
                             client.getRoomID() + "' AND message_id > " + last_message_id[0] + " ORDER BY message_id;";
                     ResultSet rs = connector.getAllMessages(sql);
@@ -223,8 +233,11 @@ class  ClientGUI extends JFrame implements Serializable  {
                     // handle exceptions here
                 } catch (RemoteException ex) {
                     throw new RuntimeException(ex);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-
 
 
         //Create label for active user list
@@ -271,7 +284,7 @@ class  ClientGUI extends JFrame implements Serializable  {
                         clientMessageBoard.setText(text);
                         clientTextBoard.setText("");    //Clear the text-box
                         client.sendMessage(messageTextArea);
-                    } catch (RemoteException ex) {
+                    } catch (IOException ex) {
                         throw new RuntimeException(ex);
                     }
                 }

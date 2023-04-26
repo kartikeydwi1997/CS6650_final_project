@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.rmi.*;
 import java.util.List;
 
@@ -13,7 +14,7 @@ public interface ChatServerInterface extends Remote {
      * @param client new client registering
      * @throws RemoteException thrown when remote invocation fails
      */
-    void register(ChatClientInterface client) throws RemoteException;
+    public void register(ChatClientInterface client) throws IOException;
 
     /**
      * Removes a client from the active clients list when they log out.
@@ -36,7 +37,7 @@ public interface ChatServerInterface extends Remote {
      * @param c client who entered the message
      * @throws RemoteException thrown when remote invocation fails
      */
-    void broadcast(String message, ChatClientInterface c) throws RemoteException;
+    public void broadcast(String message, ChatClientInterface c) throws IOException;
 
     /**
      * Broadcasts the reply from ChatGPT for the prompt sent by a client

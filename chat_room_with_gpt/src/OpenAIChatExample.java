@@ -1,11 +1,14 @@
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
+import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.Properties;
 import java.util.Scanner;
 
 /**
@@ -32,11 +35,15 @@ public class OpenAIChatExample {
                 "}";
 
         try {
+            Properties props = new Properties();
+            FileInputStream fis = new FileInputStream("chat_room_with_gpt/src/DBCred.properties");
+            props.load(fis);
+            String apiKey = props.getProperty("gptAPIKey");
             URL urlObj = new URL(url);
             HttpURLConnection con = (HttpURLConnection) urlObj.openConnection();
             con.setRequestMethod("POST");
             con.setRequestProperty("Content-Type", "application/json");
-            con.setRequestProperty("Authorization", "Bearer <YOUR_API_KEY>");
+            con.setRequestProperty("Authorization", "Bearer "+apiKey);
 
             // Send post request
             con.setDoOutput(true);
