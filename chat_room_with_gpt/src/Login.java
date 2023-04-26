@@ -13,12 +13,6 @@ public class Login extends JFrame {
     private JTextField clientIdTextField;
     private JTextField roomIdTextField;
 
-    /**
-     * Initializes the Login window class by creating and configuring the GUI components.
-     */
-//    public Login() {
-//        initialize();
-//    }
 
     /**
      * Creates the Login window class and handles the submit button click event
@@ -94,7 +88,6 @@ public class Login extends JFrame {
                         window.initialize(args);
                         window.frame.setVisible(true);
                     } catch (Exception e) {
-                        e.printStackTrace();
                     }
                 }
             }

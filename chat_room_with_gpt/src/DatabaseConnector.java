@@ -41,7 +41,6 @@ public class DatabaseConnector  {
             pstmt.close();
             return true;
         } catch (SQLException | XAException se) {
-            se.printStackTrace();
             return false;
         }
     }
@@ -67,7 +66,6 @@ public class DatabaseConnector  {
             pstmt.close();
             return true;
         } catch (SQLException | XAException e) {
-            e.printStackTrace();
             return false;
         }
     }
@@ -79,7 +77,7 @@ public class DatabaseConnector  {
     public void connectToDatabase(String url) {
         try {
             Properties props = new Properties();
-            FileInputStream fis = new FileInputStream("chat_room_with_gpt/src/DBCred.properties");
+            FileInputStream fis = new FileInputStream("DBCred.properties");
             props.load(fis);
             String user = props.getProperty("username");
             String password = props.getProperty("password");
@@ -91,9 +89,8 @@ public class DatabaseConnector  {
             xaResource = xaConnection.getXAResource();
             xid = createXid();
         } catch (SQLException | FileNotFoundException e) {
-            e.printStackTrace();
+            System.out.println("Error connecting to database");
         } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
@@ -152,7 +149,6 @@ public class DatabaseConnector  {
                 return false;
             }
         } catch (XAException e) {
-            e.printStackTrace();
             return false;
         }
     }
@@ -166,7 +162,6 @@ public class DatabaseConnector  {
             PreparedStatement pstmt = conn.prepareStatement(sql);
             return pstmt.executeQuery();
         } catch (SQLException se) {
-            se.printStackTrace();
             return null;
         }
     }

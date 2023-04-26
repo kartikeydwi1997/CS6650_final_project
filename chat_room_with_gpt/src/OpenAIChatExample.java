@@ -15,7 +15,6 @@ import java.util.Scanner;
  * This class uses ChatGPT to generate responses for the chat application.
  */
 public class OpenAIChatExample {
-
     /**
      * Generates a response to the input text using the ChatGPT model.
      * @param prompt The user's input text.
@@ -36,7 +35,7 @@ public class OpenAIChatExample {
 
         try {
             Properties props = new Properties();
-            FileInputStream fis = new FileInputStream("chat_room_with_gpt/src/DBCred.properties");
+            FileInputStream fis = new FileInputStream("DBCred.properties");
             props.load(fis);
             String apiKey = props.getProperty("gptAPIKey");
             URL urlObj = new URL(url);

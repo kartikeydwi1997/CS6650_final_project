@@ -1,5 +1,4 @@
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
 import java.rmi.*;
@@ -116,7 +115,7 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
     public static void main(String[] args) {
         try {
             Properties props = new Properties();
-            FileInputStream fis = new FileInputStream("chat_room_with_gpt/src/DBCred.properties");
+            FileInputStream fis = new FileInputStream("DBCred.properties");
             props.load(fis);
             String db1 = props.getProperty("db1");
             String db2 = props.getProperty("db2");
@@ -132,13 +131,12 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
             deleteDatabase(db2);
         } catch (Exception e) {
             System.err.println("Chat server exception: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
     private static void deleteDatabase(String url) throws IOException {
             Properties props = new Properties();
-            FileInputStream fis = new FileInputStream("chat_room_with_gpt/src/DBCred.properties");
+            FileInputStream fis = new FileInputStream("DBCred.properties");
             props.load(fis);
             String user = props.getProperty("username");
             String password = props.getProperty("password");
@@ -152,7 +150,6 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
                 int rowsAffectedInClients = stmt.executeUpdate(sql2);
                 System.out.println(rowsAffectedInClients + " rows deleted from the client table.");
             } catch (SQLException e) {
-                e.printStackTrace();
             }
     }
 }

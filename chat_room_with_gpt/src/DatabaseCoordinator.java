@@ -24,9 +24,6 @@ public class DatabaseCoordinator{
         DatabaseConnector dc1 = new DatabaseConnector();
         DatabaseConnector dc2 = new DatabaseConnector();
         getURLs(dc1, dc2);
-//        dc1.connectToDatabase("jdbc:mysql://localhost:3306/db1");
-//        dc2.connectToDatabase("jdbc:mysql://localhost:3306/db2");
-
         dbConnectors = new DatabaseConnector[2];
         dbConnectors[0] = dc1;
         dbConnectors[1] = dc2;
@@ -34,7 +31,7 @@ public class DatabaseCoordinator{
 
     private void getURLs(DatabaseConnector dc1, DatabaseConnector dc2) throws IOException {
         Properties props = new Properties();
-        FileInputStream fis = new FileInputStream("chat_room_with_gpt/src/DBCred.properties");
+        FileInputStream fis = new FileInputStream("DBCred.properties");
         props.load(fis);
         String db1 = props.getProperty("db1");
         String db2 = props.getProperty("db2");
@@ -123,7 +120,6 @@ public class DatabaseCoordinator{
                 }
             }
         } catch (ExecutionException | InterruptedException e) {
-            e.printStackTrace();
             return false;
         }
         return count == 2;

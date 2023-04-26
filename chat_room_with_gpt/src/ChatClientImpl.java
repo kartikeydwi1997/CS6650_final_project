@@ -10,9 +10,6 @@ import java.rmi.server.UnicastRemoteObject;
 import java.sql.*;
 import java.util.List;
 import java.util.Properties;
-import java.util.Set;
-import java.util.StringTokenizer;
-
 import java.io.Serializable;
 
 /**
@@ -207,7 +204,7 @@ class  ClientGUI extends JFrame implements Serializable  {
 
                 try {
                     Properties props = new Properties();
-                    FileInputStream fis = new FileInputStream("chat_room_with_gpt/src/DBCred.properties");
+                    FileInputStream fis = new FileInputStream("DBCred.properties");
                     props.load(fis);
                     String db1 = props.getProperty("db1");
                     DatabaseConnector connector = new DatabaseConnector();
@@ -222,7 +219,6 @@ class  ClientGUI extends JFrame implements Serializable  {
                         String sender = rs.getString("client_id");
                         String newText =  sender + ": " + message + "\n";
                         clientMessageBoard.append(newText);
-                        // Do something with the message data
                     }
 
                     String existingText = clientMessageBoard.getText();
@@ -234,9 +230,8 @@ class  ClientGUI extends JFrame implements Serializable  {
                 } catch (RemoteException ex) {
                     throw new RuntimeException(ex);
                 } catch (FileNotFoundException e) {
-                    e.printStackTrace();
+                    System.out.println("File not found");
                 } catch (IOException e) {
-                    e.printStackTrace();
                 }
 
 

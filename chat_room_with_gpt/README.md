@@ -2,7 +2,6 @@
 
 ### 1. In order to setup the project you need to add the dependency in your 
     > File->Project Structure-> Module
-### Click on the + sign and add the dependency, you will find two jar files one for sql connector and other for json. Make sure you have selected the checkbox and click apply to run the application.
 
 ### 2. The next step is to import the Database. You can find the sql file in the root directory of the project. Import the file in your mysql workbench or any other database management tool.
 
@@ -29,14 +28,14 @@
 ### 9. You can also send messages to the ChatGPT server by typing @BOT YOUR_MESSAGE in the message box and hit Send. The bot will reply to your message.
 
 
-### Unable to import database and run it
+### Unable to import database or run jar files
 
 ### 1. If you are unable to import the database, you can create a new connection with the name BSDS and create two databases with the name db1 and db2. In both databases run these queries to create clients and messages table. 
 
     
         > CREATE TABLE clients (
-        > client_id VARCHAR(50),
-        > room_id VARCHAR(50)
+        > client_id VARCHAR(50) NOT NULL PRIMARY KEY,
+        > room_id VARCHAR(50) NOT NULL
         > );
     
         > CREATE TABLE messages (
@@ -47,3 +46,11 @@
         > ); 
 
 ### 2. This should create two tables in both databases. Also update the DB_Cred.properties file with your username, password and connection url for both databases.
+
+### 3. Click on the + sign and add the dependency, you will find two jar files one for sql connector and other for json. Make sure you have selected the checkbox and click apply to run the application.
+
+### 4. Once the dependencies are added, you can run the server by adding port as argument. 
+
+### 5. Once the server is running, you can run the client by adding port as argument. This will open a window and will ask user to enter username and room id.
+
+###6. Also make sure you have modified the location of DBCred.properties file in the code. You can find the file in the root directory of the project.
