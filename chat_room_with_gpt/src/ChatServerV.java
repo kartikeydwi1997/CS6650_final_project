@@ -145,10 +145,8 @@ public class ChatServerV extends UnicastRemoteObject implements ChatServerInterf
             String sql2 = "DELETE FROM clients";
             try (Connection conn = DriverManager.getConnection(url, user, password);
                  Statement stmt = conn.createStatement()) {
-                int rowsAffectedInMessages = stmt.executeUpdate(sql1);
-                System.out.println(rowsAffectedInMessages + " rows deleted from the messages table.");
-                int rowsAffectedInClients = stmt.executeUpdate(sql2);
-                System.out.println(rowsAffectedInClients + " rows deleted from the client table.");
+                stmt.executeUpdate(sql1);
+                stmt.executeUpdate(sql2);
             } catch (SQLException e) {
             }
     }

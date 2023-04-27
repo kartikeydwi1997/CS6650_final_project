@@ -88,9 +88,7 @@ public class DatabaseConnector  {
             conn = xaConnection.getConnection();
             xaResource = xaConnection.getXAResource();
             xid = createXid();
-        } catch (SQLException | FileNotFoundException e) {
-            System.out.println("Error connecting to database");
-        } catch (IOException e) {
+        } catch (SQLException | IOException e) {
         }
     }
 

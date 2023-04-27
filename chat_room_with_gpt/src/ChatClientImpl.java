@@ -82,9 +82,6 @@ class ChatClientImpl extends UnicastRemoteObject implements ChatClientInterface 
     @Override
     public void receiveMessage(ChatMessage message) throws RemoteException {
         lamportClock.update(message.getTimestamp());
-        System.out.println("Timestamp: " + message.getTimestamp());
-        System.out.println("Client " + message.getSender() + " from room ID:"+ message.getRoom() + ": "
-                + message.getContent());
         gui.updateMessageUI(message);
         gui.updateActiveUsersUI(server.getClients(),message.getRoom());
     }
@@ -99,8 +96,6 @@ class ChatClientImpl extends UnicastRemoteObject implements ChatClientInterface 
     @Override
     public void receiveAnswer(ChatClientInterface c, ChatMessage message) throws RemoteException {
         lamportClock.update(message.getTimestamp());
-        System.out.println("Timestamp: " + message.getTimestamp());
-        System.out.println("\u001B[31mChatGPT: \u001B[0m " + message.getContent());
         gui.updateMessageUI(message);
     }
 
@@ -229,8 +224,6 @@ class  ClientGUI extends JFrame implements Serializable  {
                     // handle exceptions here
                 } catch (RemoteException ex) {
                     throw new RuntimeException(ex);
-                } catch (FileNotFoundException e) {
-                    System.out.println("File not found");
                 } catch (IOException e) {
                 }
 
